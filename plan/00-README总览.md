@@ -25,6 +25,7 @@
 | `plan/07-交付对标与发布计划.md` | 评分对标（含缺口列）、提交材料对照、M6 发布执行清单、开放项、风险登记 | ✅ M0 |
 | `data/README.md` | 依据查证记录（三态）、数据源可获取性、合成数据纪律、数值口径纪律 | ✅ M0 |
 | `AGENTS.md` + `tools/check-sprint-layout.mjs` | **方法论装订**：仓库锚点 + 布局门（阶段 0 第零步） | ✅ 2026-10-18 |
+| `LICENSE` | MIT 许可（用户 2026-10-18 拍板，D23） | ✅ M0 |
 | `plan/HANDOFF-M1.md` | **启动第 1 棒时读的交接单**（M0 收尾时写） | ✅ M0 收尾 |
 | `plan/RELEASE-M6.md` | 发布留档（tag 前事实 / tag 后追加，两栏） | ⬜ 待 M6 |
 | `manifest.json` + `src/` | MV3 清单与扩展源码 | 🟡 骨架（M0） |
@@ -67,6 +68,9 @@
 | D18 | **假站点名白名单**：电商/订阅类只用"示例商城（虚构）"等，域名只用 `example.invalid` / `fixture.local` | 借用真实品牌名做样本 | 避免商标与名誉风险；白名单进 `data/README.md` §3.1，生成器断言只许用白名单内的名称 |
 | D19 | **里程碑状态副本 N 处一致写进机器断言**（`tools/check-sprint-layout.mjs`） | 靠人记得同步三处 | `10-19-circuit-detective` 实测：状态副本漂移跨两个里程碑没人改。判据落"仓库内文件"，不落 git 元数据 |
 | D20 | **样式条件分两档：`detect.style` = AND，`detect.style_any` = OR** | 只用单个 `style`（全部条件必须同时成立） | 实测踩坑：两条关闭类规则写成"极小 **且** 低对比 **且** 半透明" → **永不命中**（违反规则的语意），而规则数据与测试同错时不会红。加 `style_any` 后语义显式化。**这是"动了会打挂规则数据与基准"级口径**（K19） |
+| D22 | **GitHub 仓库名 = `pattern-lens`**（署名 `yuluo554/pattern-lens`） | ①`ui-pattern-lens`；②`10-19-pattern-lens` | 用户 2026-10-18 拍板。纯 kebab-name 与本地目录日期标签解耦；Release 附件名沿用 `pattern-lens-<version>.zip` |
+| D23 | **许可证 = MIT** | ①Apache-2.0（含专利授权条款）；②暂不添加（GitHub 默认保留所有权利） | 用户 2026-10-18 拍板：与本系列其他项目一致、短且易读。三处落点 = `LICENSE` + `package.json.license` + README §许可 |
+| D24 | **基准按 D15 执行（Node 纯核心 + 浏览器冒烟可选）** | 引入 playwright / puppeteer 作为 devDependency | 用户 2026-10-18 确认：**保住「git clone 后不装包即可 `npm test`」**；真实渲染路径的缺口写进 README 局限披露与 `plan/06` §五，不冒充已验 |
 | D21 | **源码卫生判据只扫剥注释后的代码**（注释不是行为） | 直接扫原文 | 判据扫原文时，注释里"本模块不碰扩展 API"这类说明文字会被判成违规（**判据张冠李戴**）。正解 = 剥离注释后再扫，并配两条自证：① 剥离后仍留代码 token（防"剥离函数吃空整段"造成假绿）；② 注入的真违规仍被抓住（阳性对照） |
 
 ---
@@ -123,7 +127,7 @@
 | 侧边栏冷启动 / SW 被回收后恢复 | `chrome.storage.session` | sidePanel + SW | `tests/sidepanel-restore.test.mjs` | ⬜ 待 M4 |
 | 导出 Markdown/JSON 字段完整且字节稳定 | Blob + `<a download>` | sidePanel 导出按钮 | `tests/export-fields.test.mjs` + 双跑字节一致 | 🟡 导出核心 + 双跑断言在（M0），UI 待 M5 |
 | 整轮扫描 + 导出 0 次网络请求 | 只读 DOM，无 fetch | 全链路 | `tests/zero-network.test.mjs` + 浏览器冒烟 | ⬜ 待 M5 |
-| 文案统一"可疑模式（待核对）" | 文案单点 `src/ui/copy.js` | sidePanel + 导出 | `tests/copy-guard.test.mjs`：禁用词扫描 + 阳性对照 | 🟡 扫描在（M0），UI 待 M4/M5 |
+| 文案统一"可疑模式（待核对）" | 文案单点 `src/lib/copy.js` | sidePanel + 导出 | `tests/copy-guard.test.mjs`：禁用词扫描 + 阳性对照 | 🟡 扫描在（M0），UI 待 M4/M5 |
 | 隐私声明与零采集一致 | `docs/隐私声明.md` | 文档 + 代码 | 人工对账 + 权限白名单断言 | ⬜ 待 M5 |
 | **零远程代码**（MV3 硬约束） | 无 CDN、无 fetch、规则随包 | 全链路 | `tests/source-hygiene.test.mjs`：源码与产物无 `http(s)://` 外链、无 `eval` | 🟡 扫描在（M0） |
 

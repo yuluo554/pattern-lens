@@ -69,4 +69,4 @@ npm run build         # → dist/（可 Load unpacked 的扩展树）+ 确定性
 
 ## 许可
 
-许可证待定（见 [`plan/07-交付对标与发布计划.md`](plan/07-交付对标与发布计划.md) §四 Q2）。
+[MIT](LICENSE) © 2026 yuluo554（无担保；工具结论仅供人工复核，不构成法律意见或事实认定）。
