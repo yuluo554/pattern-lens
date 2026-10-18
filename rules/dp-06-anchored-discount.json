@@ -1,0 +1,16 @@
+{
+  "rule_id": "dp-anchored-discount",
+  "name": "锚定折扣（划线价无可核对来源）",
+  "category": "price",
+  "severity": "medium",
+  "detect": {
+    "node_kinds": ["text", "element"],
+    "text_all": ["(原价|划线价|日常价)", "(现价|优惠价|到手价|券后)"],
+    "nearby_absent_any": ["历史价格", "价格来源", "比价", "价格说明"]
+  },
+  "evidence_required": ["text", "nearby-text"],
+  "locator_strategy": "价格区节点：文档序路径 + 周边文本",
+  "explanation": "同一区域内并列出现「原价/划线价」与「现价/到手价」，而周边没有价格来源或历史价格说明。本条记录两处文本证据，不判断折扣是否真实。",
+  "limits": ["历史价格需要跨时间采集，本工具只做单次页面取证"],
+  "remediation_hint": "若使用划线价对比，应在同一区域给出价格来源与适用期间"
+}

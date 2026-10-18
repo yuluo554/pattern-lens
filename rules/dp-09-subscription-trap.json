@@ -1,0 +1,19 @@
+{
+  "rule_id": "dp-subscription-trap",
+  "name": "订阅取消渠道受限（仅电话/客服）",
+  "category": "obstacle",
+  "severity": "high",
+  "detect": {
+    "node_kinds": ["text"],
+    "text_any": [
+      "(电话|致电|客服热线|门店).{0,16}(取消|退订|解约)",
+      "(取消|退订|解约).{0,16}(电话|客服热线|门店)"
+    ],
+    "nearby_absent_any": ["在线取消", "自助取消", "一键取消", "管理订阅", "账户设置"]
+  },
+  "evidence_required": ["text", "nearby-text"],
+  "locator_strategy": "承载该文案的节点：文档序路径 + 周边文本",
+  "explanation": "页面把取消/退订指向电话或客服，且同一区域未提供在线自助取消入口。本条记录原文与周边文本两处证据，不判断站点是否真的没有在线取消路径。",
+  "limits": ["在线入口可能位于登录后的其他页面；本条只覆盖当前页可见内容"],
+  "remediation_hint": "取消应与订阅同样便捷，并提供在线自助入口"
+}

@@ -1,0 +1,19 @@
+{
+  "rule_id": "dp-forced-signup",
+  "name": "强迫注册（须注册/登录才能继续）",
+  "category": "obstacle",
+  "severity": "medium",
+  "detect": {
+    "node_kinds": ["control", "text"],
+    "text_any": [
+      "注册\\s*.{0,8}(后|才能|即可)\\s*.{0,6}(查看|浏览|购买|继续)",
+      "登录\\s*.{0,8}后\\s*.{0,8}(查看|浏览|购买|继续)",
+      "仅\\s*.{0,4}(会员|注册用户)\\s*.{0,4}(可见|可看|可购)"
+    ]
+  },
+  "evidence_required": ["text", "label-text"],
+  "locator_strategy": "承载该文案的节点（控件优先取其标签文本）：文档序路径 + 原文",
+  "explanation": "页面文案要求先注册或登录才能继续查看/购买。本条记录原文与其所在控件两处证据，不判断该要求是否必要。",
+  "limits": ["是否存在可绕过入口（如「跳过」）需人工复核，本工具不点击"],
+  "remediation_hint": "非必要环节不应以注册为前置条件"
+}

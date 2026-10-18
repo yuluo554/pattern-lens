@@ -1,0 +1,20 @@
+{
+  "rule_id": "dp-confirmshaming",
+  "name": "确认羞辱（把拒绝写成贬损选项）",
+  "category": "misleading",
+  "severity": "medium",
+  "detect": {
+    "node_kinds": ["control", "text"],
+    "text_any": [
+      "不[，,]?(要)?\\s*(省|优惠|折扣|免费)",
+      "放弃\\s*.{0,6}(优惠|折扣|赠品)",
+      "继续\\s*.{0,6}(原价|全价)",
+      "我(不想|不需要)\\s*.{0,8}(省|变强|变好)"
+    ]
+  },
+  "evidence_required": ["text", "label-text"],
+  "locator_strategy": "承载该文案的节点（控件优先取其标签文本）：文档序路径 + 原文",
+  "explanation": "该按钮/文本把「拒绝」写成了带贬损或诱导意味的表述（如「不，我不要优惠」）。本条记录原文与其所在控件两处证据，不对站点动机下结论。",
+  "limits": ["表述是否构成贬损，最终由人工复核判断；本条只做形态识别"],
+  "remediation_hint": "拒绝选项应使用中性表述（如「不用了，谢谢」）"
+}

@@ -1,0 +1,25 @@
+{
+  "name": "pattern-lens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "界面取证镜：暗黑模式取证浏览器扩展（MV3）——只做取证不做打分，无证据节点不产出结论",
+  "license": "UNLICENSED",
+  "author": "yuluo554",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "layout": "node tools/check-sprint-layout.mjs",
+    "test": "node --test tests/sprint-layout.test.mjs tests/test-manifest.test.mjs tests/source-hygiene.test.mjs tests/manifest-permissions.test.mjs tests/rules-schema.test.mjs tests/engine-gate.test.mjs tests/engine-order.test.mjs tests/snippet-verbatim.test.mjs tests/export.test.mjs tests/copy-guard.test.mjs tests/build.test.mjs tests/ci-workflow.test.mjs",
+    "verify": "node tools/verify.mjs",
+    "verify:strict": "node tools/verify.mjs --strict",
+    "rules:hash": "node tools/hash-rules.mjs",
+    "build": "node tools/build-extension.mjs",
+    "build:check": "node tools/build-extension.mjs --check",
+    "fixtures": "node tools/gen-fixtures.mjs",
+    "fixtures:check": "node tools/gen-fixtures.mjs --check"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

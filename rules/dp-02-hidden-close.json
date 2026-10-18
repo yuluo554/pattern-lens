@@ -1,0 +1,37 @@
+{
+  "rule_id": "dp-hidden-close",
+  "name": "隐形关闭（关闭控件不可见或极小）",
+  "category": "obstacle",
+  "severity": "high",
+  "detect": {
+    "node_kinds": [
+      "control"
+    ],
+    "near_text_any": [
+      "关闭",
+      "取消",
+      "跳过",
+      "稍后"
+    ],
+    "style_any": [
+      {
+        "max_size_px": 8
+      },
+      {
+        "color_equals_background": true
+      }
+    ]
+  },
+  "evidence_required": [
+    "box-size",
+    "style-color",
+    "style-background-color",
+    "label-text"
+  ],
+  "locator_strategy": "可点击控件元素：优先 aria-label/title 文本，其次 id/name，缺失时用文档序路径",
+  "explanation": "该「关闭/取消/跳过」控件的可点击尺寸极小，或前景色与背景色相同（视觉上无法辨认）。本条只记录几何尺寸与前景/背景色值两处证据。",
+  "limits": [
+    "尺寸与颜色取自渲染后的计算样式；若站点在扫描后又改变了样式，证据可能与当前画面不一致"
+  ],
+  "remediation_hint": "关闭控件应达到可点击的最小尺寸，并与背景保持可辨认的对比"
+}

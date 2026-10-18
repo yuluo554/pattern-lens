@@ -1,0 +1,36 @@
+{
+  "rule_id": "dp-dark-close",
+  "name": "低对比关闭控件",
+  "category": "misleading",
+  "severity": "medium",
+  "detect": {
+    "node_kinds": [
+      "control"
+    ],
+    "near_text_any": [
+      "关闭",
+      "取消",
+      "跳过"
+    ],
+    "style_any": [
+      {
+        "contrast_below": 2
+      },
+      {
+        "opacity_max": 0.35
+      }
+    ]
+  },
+  "evidence_required": [
+    "contrast-ratio",
+    "style-color",
+    "style-background-color",
+    "label-text"
+  ],
+  "locator_strategy": "可点击控件元素：优先 aria-label/title，其次 id/name，缺失时用文档序路径",
+  "explanation": "该「关闭/取消/跳过」控件的前景与背景对比度偏低，或整体透明度很高，使其在视觉上难以辨认。本条记录对比度与颜色值两处证据。",
+  "limits": [
+    "对比度按 WCAG 相对亮度公式在本机计算；与「隐形关闭」形态相近，同一节点命中多条时按规则包 match_priority 归属"
+  ],
+  "remediation_hint": "关闭控件应与正文保持可辨认的对比度"
+}

@@ -1,0 +1,21 @@
+{
+  "rule_id": "dp-exit-retention",
+  "name": "退出挽留文案",
+  "category": "obstacle",
+  "severity": "medium",
+  "detect": {
+    "node_kinds": ["text", "element"],
+    "text_any": [
+      "确定要离开",
+      "确定放弃",
+      "再想想",
+      "放弃\\s*.{0,4}(优惠|购物车|订单)",
+      "留下\\s*.{0,6}优惠"
+    ]
+  },
+  "evidence_required": ["text", "nearby-text"],
+  "locator_strategy": "承载该文案的节点：文档序路径 + 周边文本",
+  "explanation": "页面出现挽留型文案（确定要离开吗、放弃优惠、再想想）。本条记录原文与周边文本，用于人工复核挽留环节的层数与强度。",
+  "limits": ["「多层挽留」需要在交互过程中才能观察到；本工具不点击、不代替用户操作，故本条只取证当前可见层"],
+  "remediation_hint": "退出流程应一次可完成，不叠加挽留步骤"
+}

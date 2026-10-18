@@ -1,0 +1,93 @@
+{
+  "ruleset_version": "0.1.0",
+  "ruleset_hash": "0b5805c7088db4799453191093925023d0a7149f453d302f93a2a2c29c106aed",
+  "rule_files": [
+    "dp-01-prechecked-optin.json",
+    "dp-02-hidden-close.json",
+    "dp-03-countdown-pressure.json",
+    "dp-04-fake-scarcity.json",
+    "dp-05-confirmshaming.json",
+    "dp-06-anchored-discount.json",
+    "dp-07-default-addon.json",
+    "dp-08-exit-retention.json",
+    "dp-09-subscription-trap.json",
+    "dp-10-hidden-fee.json",
+    "dp-11-forced-signup.json",
+    "dp-12-dark-close.json"
+  ],
+  "severity_levels": [
+    "low",
+    "medium",
+    "high"
+  ],
+  "categories": [
+    "urgency",
+    "misleading",
+    "obstacle",
+    "price"
+  ],
+  "thresholds": {
+    "precision_min": 0.9,
+    "recall_min": 0.8,
+    "min_cases_per_rule": 3,
+    "scan_timeout_ms": 2000,
+    "first_result_budget_ms": 500,
+    "fixture_page_count": 40,
+    "snippet_max_len": 160
+  },
+  "match_priority": [
+    "dp-hidden-close",
+    "dp-prechecked-optin",
+    "dp-subscription-trap",
+    "dp-hidden-fee",
+    "dp-dark-close",
+    "dp-confirmshaming",
+    "dp-default-addon",
+    "dp-fake-scarcity",
+    "dp-countdown-pressure",
+    "dp-exit-retention",
+    "dp-anchored-discount",
+    "dp-forced-signup"
+  ],
+  "sort": {
+    "primary": "severity_desc",
+    "secondary": "dom_order"
+  },
+  "output": {
+    "json_indent": 2,
+    "eol": "lf",
+    "trailing_newline": true
+  },
+  "evidence_kinds": [
+    "text",
+    "label-text",
+    "nearby-text",
+    "checked-state",
+    "box-size",
+    "contrast-ratio",
+    "style-color",
+    "style-background-color",
+    "style-display",
+    "style-opacity",
+    "style-font-size",
+    "dom-path"
+  ],
+  "detect_keys": [
+    "node_kinds",
+    "text_any",
+    "text_all",
+    "near_text_any",
+    "nearby_absent_any",
+    "attrs",
+    "style",
+    "style_any",
+    "neutralizers"
+  ],
+  "style_keys": [
+    "max_size_px",
+    "color_equals_background",
+    "opacity_max",
+    "contrast_below",
+    "min_font_size_px"
+  ]
+}

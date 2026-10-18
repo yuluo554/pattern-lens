@@ -1,0 +1,16 @@
+{
+  "rule_id": "dp-countdown-pressure",
+  "name": "倒计时施压",
+  "category": "urgency",
+  "severity": "medium",
+  "detect": {
+    "node_kinds": ["text", "element"],
+    "text_any": ["\\d{1,2}\\s*[:：]\\s*\\d{2}", "倒计时", "仅剩\\s*\\d+\\s*(分钟|秒|小时)", "限时\\s*\\d+"],
+    "neutralizers": ["距活动开始", "活动回顾"]
+  },
+  "evidence_required": ["text"],
+  "locator_strategy": "承载该文本的节点：文档序路径 + 文本前后各 20 字上下文",
+  "explanation": "页面上出现倒计时形态的文本（时分秒、仅剩 N 分钟、限时 N 等）。本条只取证该文本本身，不核对倒计时是否真实（本工具不等待、不刷新）。",
+  "limits": ["倒计时是否真实到期，需要人工复核或二次访问；本条不判断真伪"],
+  "remediation_hint": "如倒计时与真实截止时间无关，应移除或改为不施压的表述"
+}

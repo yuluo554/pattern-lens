@@ -1,0 +1,16 @@
+{
+  "rule_id": "dp-default-addon",
+  "name": "默认加购（附加项默认选中）",
+  "category": "misleading",
+  "severity": "medium",
+  "detect": {
+    "node_kinds": ["control"],
+    "attrs": { "type": "checkbox", "checked": "true" },
+    "near_text_any": ["延保", "服务包", "附加", "一起买", "顺带", "加购"]
+  },
+  "evidence_required": ["checked-state", "label-text"],
+  "locator_strategy": "checkbox 元素：优先 name/id，缺失时用文档序路径",
+  "explanation": "该附加项（延保/服务包/搭售）在页面加载时即为勾选状态。本条记录勾选状态与标签原文两处证据，不判断是否属于用户此前的显式选择。",
+  "limits": ["与「预勾选（默认勾选）」规则形态相近，同一节点命中多条时按规则包 match_priority 归属"],
+  "remediation_hint": "附加项应默认不勾选，由用户显式选择"
+}

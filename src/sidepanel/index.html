@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>界面取证镜</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <h1 id="title">界面取证镜</h1>
+      <p id="tagline" class="tagline"></p>
+    </header>
+
+    <section class="actions">
+      <button id="scan" type="button" class="primary"></button>
+      <button id="highlight" type="button"></button>
+      <button id="clear" type="button"></button>
+      <button id="export-md" type="button"></button>
+      <button id="export-json" type="button"></button>
+    </section>
+
+    <p id="status" class="status" role="status"></p>
+
+    <main id="groups" class="groups" aria-live="polite"></main>
+
+    <details id="settings" class="settings">
+      <summary>设置（本机保存）</summary>
+      <div class="settings-body">
+        <label for="policy-mode">站点策略</label>
+        <select id="policy-mode">
+          <option value="blocklist">黑名单（列出的站点不扫描）</option>
+          <option value="allowlist">白名单（只扫描列出的站点）</option>
+        </select>
+        <label for="policy-hosts">站点主机名（一行一个）</label>
+        <textarea id="policy-hosts" rows="3" spellcheck="false"></textarea>
+        <p class="hint">主机名形如 <code>example.invalid</code>；不写协议与路径。</p>
+        <fieldset id="rule-toggles">
+          <legend>规则开关</legend>
+        </fieldset>
+        <p id="ruleset-line" class="hint"></p>
+      </div>
+    </details>
+
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>

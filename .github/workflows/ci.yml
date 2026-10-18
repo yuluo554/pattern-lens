@@ -1,0 +1,48 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: "verify (${{ matrix.os }}, node ${{ matrix.node }})"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: ["22", "24"]
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup Node"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: "Show versions"
+        run: node --version
+
+      - name: "Sprint layout gate (methodology binding)"
+        run: node tools/check-sprint-layout.mjs
+
+      - name: "Rules pack hash and generated module in sync"
+        run: node tools/hash-rules.mjs --check
+
+      - name: "Unit and gate tests"
+        run: npm test
+
+      - name: "Build extension tree and deterministic zip"
+        run: npm run build
+
+      - name: "Rebuild must be byte-identical"
+        run: node tools/build-extension.mjs --check
+
+      - name: "Full self-check"
+        run: npm run verify

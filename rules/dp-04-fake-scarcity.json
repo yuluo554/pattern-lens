@@ -1,0 +1,16 @@
+{
+  "rule_id": "dp-fake-scarcity",
+  "name": "稀缺表述且无可核对来源",
+  "category": "urgency",
+  "severity": "medium",
+  "detect": {
+    "node_kinds": ["text"],
+    "text_any": ["仅剩\\s*\\d+\\s*件", "只剩\\s*\\d+\\s*件", "仅余\\s*\\d+", "库存仅", "即将售罄"],
+    "nearby_absent_any": ["库存来源", "实时库存", "库存数据来源", "仓库余量"]
+  },
+  "evidence_required": ["text", "nearby-text"],
+  "locator_strategy": "承载该文本的节点：文档序路径 + 周边文本（父容器内其余文本）",
+  "explanation": "页面出现「仅剩 N 件」这类数量稀缺表述，而其周边区域没有任何可核对的数量来源。本条记录原文与周边文本两处证据，不判断该数量真伪。",
+  "limits": ["数量是否真实取决于站点后台数据，本工具无法访问；本条只指出「无可核对来源」这一事实"],
+  "remediation_hint": "若数量来自真实库存，应在同一区域标明来源与更新时间"
+}

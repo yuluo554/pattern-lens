@@ -1,0 +1,17 @@
+{
+  "rule_id": "dp-prechecked-optin",
+  "name": "预勾选（默认勾选）",
+  "category": "misleading",
+  "severity": "high",
+  "detect": {
+    "node_kinds": ["control"],
+    "attrs": { "type": "checkbox", "checked": "true" },
+    "near_text_any": ["订阅", "续订", "会员", "保价", "加购", "推荐服务"],
+    "neutralizers": ["取消订阅", "不再需要", "退订"]
+  },
+  "evidence_required": ["checked-state", "label-text"],
+  "locator_strategy": "checkbox 元素：优先 name/id，缺失时用文档序路径（tag:index 链）",
+  "explanation": "该复选框在页面加载时即为勾选状态，其标签文字指向订阅/续订/会员/保价等非必需项。本条只记录「加载即勾选 + 标签原文」两处证据，不判断勾选是否为用户本意。",
+  "limits": ["工具不点击、不改变勾选状态，因此无法核对用户之前是否已取消过该勾选"],
+  "remediation_hint": "把非必需项改为默认不勾选，或把勾选状态与用户显式操作绑定"
+}
