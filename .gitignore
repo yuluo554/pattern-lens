@@ -1,0 +1,43 @@
+# ---- Node ----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+
+# ---- 构建与打包产物 ----
+dist/
+build/
+out/
+coverage/
+*.zip
+*.crx
+*.pem
+
+# ---- 测试与缓存 ----
+.pytest_cache/
+.cache/
+.nyc_output/
+*.log
+
+# ---- 环境与私密 ----
+.env
+.env.*
+!.env.example
+_private/
+*.local
+
+# ---- 编辑器 / 系统 ----
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 临时 ----
+tmp/
+*.tmp
