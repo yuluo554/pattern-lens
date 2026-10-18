@@ -15,7 +15,7 @@
 | 双跑一致 | 基准 B3 | 40 页逐页比对（含打乱输入顺序）**逐字节一致** |
 | snippet / locator | 基准 B4 / B5 | 48 条逐条是 `page.html` 原样子串；**截断分支实测未走到（truncated = 0）**；48 finding + 8 rejected 全部回解到节点 |
 | 超时分支 | 基准 B6 | `runScan` 真实入口：截断分支非空 + `truncated: true`；阴性对照 `truncated: false` |
-| 5k 耗时 | 基准 B7 | 5007 节点：冷 **106.5ms** / 热 **114.2ms**（预算 500ms） |
+| 5k 耗时 | 基准 B7 | 5007 节点：冷 **106~175ms** / 热 **114~178ms**（多轮实测区间；预算 500ms，余量充足） |
 | 探活（可证伪） | `tests/rules-bench.test.mjs` | **3 组全红**：引擎侧中和项短路 → precision 边；数据侧删 `nearby_absent_any` → 误报边；数据侧加不可满足 `text_all` → recall 边。每组变红后还原并**断言字节已还原** |
 | 建模缺口反事实 | `tests/rules-bench.test.mjs` | 常驻 2 项：恢复缺口形态 → 误报 **85** 条（基线 0，断言 ≥ 60）+ 四条文本级规则 precision 掉到 **0.1379~0.1667**（断言 < 门槛）——证明 D29 是载荷的 |
 | 阈值单点 | `tests/threshold-token.test.mjs` | 剥注释扫 `src/**` + `rules/dp-*.json` **零命中**；阳性/阴性对照齐备；豁免清单打印（豁免 3、40） |
@@ -32,7 +32,7 @@
 
 1. **D29 建模缺口处置**：`label` 的自身文本回退**只对控件**生效（普通元素只取显式标签属性）。口径单点在 `src/lib/page-model.js` 的 `labelFrom()`；采集器、基准侧（`tools/fixture-page-model.mjs`）、生成器三处同调。
 2. **D30 同一 locator 去重**：引擎按 `(rule_id, locator)` 去重（先到先得），被丢的候选记 `rejected[].reason = "duplicate_locator"`。**新增了一个 reject reason 取值**（`plan/04` M2 判定语义已补记）。
-3. **D31 周边文本性能**：`limitNearText()` 改"按需翻倍前缀"归一（语义与通篇归一等价）；压力页冷启动 1313ms → 106.5ms。**`NEAR_TEXT_LIMIT`（200）从采集器搬到了 `src/lib/page-model.js`**（三处同调）。
+3. **D31 周边文本性能**：`limitNearText()` 改"按需翻倍前缀"归一（语义与通篇归一等价）；压力页冷启动 1313ms → 106~175ms（多轮区间）。**`NEAR_TEXT_LIMIT`（200）从采集器搬到了 `src/lib/page-model.js`**（三处同调）。
 4. **采集器缺陷①（parity 门抓出）**：采集器原用原生 `textContent`，会把 `<style>` 块里的 **CSS 文本**算进 `nearby-text`（`body` 的周边文本含整段样式表）→ 改为**跳过 SKIP_TAGS 子树**的 `textContentSkipping()`。**基准侧全绿也照不出这个缺陷**（基准侧走的是自己那套解析）。
 5. **采集器缺陷②（parity 门抓出）**：采集器把 `contrast` 塞进了 `style` 对象，而证据登记表读的是 **`node.contrast`** → `contrast-ratio` 永远取不到，**`dp-dark-close` 在真实浏览器里永不产出**（基准侧因为直接构造节点而全绿）。改为 `styleOf()` 返回 `{style, contrast}`，顶层字段赋值。
 
@@ -100,7 +100,7 @@
 - **`fixtures:check` 是重量级门**（要重新生成 124 个文件，约 3.2s）；它已进 `verify`，别在循环里反复调。
 - **`npm test` 现在约 9s**（M2 新增 `tests/rules-bench.test.mjs`：3 组探活要在临时目录里复制整棵仓库，约 5s）；
   跑单文件更快：`node --test tests/rules-bench.test.mjs`（或 `tests/collector-parity.test.mjs`，约 50ms）。
-- **`tools/bench-rules.mjs` 的 B7 是墙钟测量**：本机 106~137ms 有波动，但离 500ms 预算余量充足；
+- **`tools/bench-rules.mjs` 的 B7 是墙钟测量**：本机实测 **106~178ms** 有波动（同一提交多轮跑），离 500ms 预算余量充足；
   它**只测量、不进任何产物**（产物里的 `elapsed_ms` 由调用方注入，基准里固定为 0 → 双跑字节一致）。
 - **本机自动化拉浏览器不稳**（有实测史）→ M3 的浏览器冒烟缺浏览器时**显式 SKIP**，不得据此打 ✅。
 - **`src/background/service-worker.js` 现在有 `HAS_RUNTIME` 守卫**：没有扩展运行时时不挂监听，模块可被离线单测 import
@@ -113,7 +113,7 @@
 - [x] 逐规则 precision ≥ `thresholds.precision_min`、recall ≥ `thresholds.recall_min`（双边门 + 逐样本点名；12/12 达标）
 - [x] 无证据节点的规则**零产出**（按类断供证据 8 类 + 反向对照 + 按引用还原自证）
 - [x] 同一页面同一规则包 findings 排序稳定（40 页双跑逐字节一致）
-- [x] 5k 节点页面：解析 + 判定 < `thresholds.first_result_budget_ms`（冷 106.5ms / 热 114.2ms）
+- [x] 5k 节点页面：解析 + 判定 < `thresholds.first_result_budget_ms`（冷 106~175ms / 热 114~178ms，多轮区间）
 - [x] 超时 → 部分结果 + `truncated: true`（走 `runScan` 真实入口 + 阴性对照）
 - [x] manifest 无 `content_scripts`；权限白名单断言通过（`host_permissions` 为空）+ 黑名单站点零注入
 - [x] 阈值 token 门禁：`src/**` 与 `rules/dp-*.json` 内无第二份阈值数字（两条已声明豁免）

@@ -91,7 +91,7 @@
 |---|---|---|---|
 | D29 | **`label` 的自身文本回退只对控件生效**；普通元素只取显式标签属性（`aria-label`/`title`/`placeholder`/`alt`），**不取 `textContent`** | ①普通元素也用 `textContent` 回退（M1 遗留的建模缺口）②引擎侧按 `(rule_id, locator)` 去重来兜住重复命中 | **实测（反事实对照，断言常驻）**：缺口原样时 40 页基准产出 **133 条 finding / 85 条误报**——"允许 element 的文本级规则"（`dp-countdown-pressure`/`dp-anchored-discount`/`dp-exit-retention`/`dp-hidden-fee`）在每个祖先容器上重复命中，连 `html`/`body` 都命中（`body.label` = 整页文本），四条规则 precision 掉到 **0.1379~0.1667**，B1 双边门必红。**弃①**（会把误报写进模型层，且"文本的取证点"本就落在文本节点上）；**弃②作为唯一手段**（去重只在**同一 locator** 上生效，跨 locator 的祖先重复命中它挡不住）。口径**单点**落在 `src/lib/page-model.js` 的 `labelFrom()`，采集器/基准侧/生成器三处同调；反事实对照见 `tests/rules-bench.test.mjs`（常驻 2 项：恢复缺口形态 → 误报 ≥ 60 条 + 四条文本级规则 precision 必须掉到门槛以下） |
 | D30 | **同一 `(rule_id, locator)` 只出一条 finding**（先到先得 = 文档序在前者胜），被丢弃的候选记 `rejected[].reason = "duplicate_locator"` | 允许同一 locator 出多条（同规则重复计数） | 定位串 `tag:nth(i)` 的约定是"**文本节点的路径 = 其父元素路径**"（K24），于是文本节点与其宿主**控件**共用同一个 locator：若两条都产出，同一条证据在清单里出现两次（用户看到重复条目、导出也重复）。**弃"允许重复"**：清单要能当证据用，重复条目会让"几条证据"这个数失真。**丢弃必须可观测**（与 K3 的证据门禁同一纪律：丢弃 ≠ 静默跳过），故进 `rejected` 而不是直接 continue |
-| D31 | **周边文本用"按需翻倍前缀"归一**（`limitNearText`），不做通篇归一 | 逐节点对**整个父容器文本**做空白归一 | **实测**：压力页（5007 节点）里一个 `<ul>` 下有 2500 行，父文本 ~25k 字符 × 2500 子节点 ≈ 6 千万字符的正则归一 → 冷启动 **1313ms**，超 `first_result_budget_ms`（500ms）预算 2.6 倍。归一只让字符串**变短**（折叠空白），故"原始前缀归一后 ≥ limit"时其前 limit 字符与"全串归一后前 limit 字符"**逐字节相同** → 语义与通篇归一等价，工作量降到 O(limit×常数)（改后 **106.5ms**）。**弃通篇归一**（超预算即 NFR-06 不达标）；**弃"直接截原始串再归一"**（会在中间截断处制造"多一个少一个空格"的语义差） |
+| D31 | **周边文本用"按需翻倍前缀"归一**（`limitNearText`），不做通篇归一 | 逐节点对**整个父容器文本**做空白归一 | **实测**：压力页（5007 节点）里一个 `<ul>` 下有 2500 行，父文本 ~25k 字符 × 2500 子节点 ≈ 6 千万字符的正则归一 → 冷启动 **1313ms**，超 `first_result_budget_ms`（500ms）预算 2.6 倍。归一只让字符串**变短**（折叠空白），故"原始前缀归一后 ≥ limit"时其前 limit 字符与"全串归一后前 limit 字符"**逐字节相同** → 语义与通篇归一等价，工作量降到 O(limit×常数)（改后 **106~175ms**，多轮实测区间）。**弃通篇归一**（超预算即 NFR-06 不达标）；**弃"直接截原始串再归一"**（会在中间截断处制造"多一个少一个空格"的语义差） |
 
 ---
 
@@ -141,7 +141,7 @@
 | 无证据节点不产出 finding | 规则包 `evidence_required` 字段 | 判定核心内置门禁 | `tests/engine-gate.test.mjs` + 基准 B2（8 类证据逐类断供 → 零产出 + `rejected` 非空 + 反向对照） | ✅ M2（语料侧此类候选实测 0 个，故用断供注入可证伪） |
 | 单规则 precision ≥ 0.90 / recall ≥ 0.80 | 40 页合成 fixture + 植入真值 | 基准脚本随仓 | `npm run bench` / `npm run verify`（门槛读 `rules/manifest.json`） | ✅ M2：12/12 规则达标（正 48 / 负 24 / finding 48 / 误报 0）+ 3 组探活全红 |
 | 未点击前零注入 | `activeTab` + `scripting` 按需注入 | manifest 无 `content_scripts` | `tests/injection-chain.test.mjs`（含否定性事实：黑名单站点零注入） | ✅ M2（浏览器冒烟仍未做，见 `plan/06` §五） |
-| 点击到出结果 < 500ms（5k 节点页） | 合成 5k 节点页面（`data/fixtures/stress-5k/page.html`） | 单遍遍历 | 基准 B7（阈值读 `rules/manifest.json`） | ✅ M2：5007 节点冷 106.5ms / 热 114.2ms（口径见 D31） |
+| 点击到出结果 < 500ms（5k 节点页） | 合成 5k 节点页面（`data/fixtures/stress-5k/page.html`） | 单遍遍历 | 基准 B7（阈值读 `rules/manifest.json`） | ✅ M2：5007 节点冷 106~175ms / 热 114~178ms（多轮区间；口径见 D31） |
 | 权限最小化 | manifest 白名单 | 交付物即 manifest | `tests/manifest-permissions.test.mjs` 逐项比对 | ✅ M2（白名单不变，M0 起常驻） |
 | 取证层清除后 DOM diff = 0 | Shadow DOM 覆盖层 | content script | `tests/overlay-dom-diff.test.mjs` | ⬜ 待 M3 |
 | 侧边栏冷启动 / SW 被回收后恢复 | `chrome.storage.session` | sidePanel + SW | `tests/sidepanel-restore.test.mjs` | ⬜ 待 M4 |
