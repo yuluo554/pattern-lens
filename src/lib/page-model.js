@@ -8,10 +8,37 @@ export const KIND_CONTROL = "control";
 
 export const CONTROL_TAGS = ["input", "button", "select", "textarea", "a"];
 
+/** 周边文本 / 标签文本的截断长度（口径单点：采集层、基准侧、fixture 生成器都读它）。 */
+export const NEAR_TEXT_LIMIT = 200;
+
+/** 控件标签属性的优先级（口径单点，与 `data/fixtures/README.md` 一致）。 */
+export const LABEL_ATTRS = ["aria-label", "title", "placeholder", "alt"];
+
 export function kindOfTag(tag) {
   const lower = String(tag || "").toLowerCase();
   if (!lower) return KIND_TEXT;
   return CONTROL_TAGS.includes(lower) ? KIND_CONTROL : KIND_ELEMENT;
+}
+
+/**
+ * 可读标签（**口径单点**，采集层与基准侧都调它，K24）：
+ *   显式标签属性（aria-label / title / placeholder / alt）→ **仅控件**的自身文本 → `value`。
+ *
+ * ⚠ 为什么普通元素**不取自身文本**（决策 D29）：元素节点的自身文本回退取的是 `textContent`（含全部子孙），
+ * 于是每个祖先容器都会带着子孙全文去命中"允许 element 的文本级规则"——连 `body`/`html` 都命中
+ * （实测：40 页基准上 85 条误报，倒计时/划线价/挽留/费用四条规则 precision 掉到 0.28）。
+ * 文本的取证点本就落在**文本节点**上（路径与宿主元素相同），普通元素无需重复承载。
+ */
+export function labelFrom({ tag = "", attrs = {}, ownText = "" }) {
+  for (const name of LABEL_ATTRS) {
+    const value = attrs?.[name];
+    if (typeof value === "string" && value.trim().length > 0) return value.trim().slice(0, NEAR_TEXT_LIMIT);
+  }
+  if (!CONTROL_TAGS.includes(String(tag).toLowerCase())) return "";
+  const own = String(ownText ?? "").trim();
+  if (own.length > 0) return own.slice(0, NEAR_TEXT_LIMIT);
+  const value = attrs?.value;
+  return typeof value === "string" && value.trim().length > 0 ? value.trim().slice(0, NEAR_TEXT_LIMIT) : "";
 }
 
 /** 文本节点：`seq` 是文档序下标，`nearText` 是同容器内其余文本（可空串，但必须**有定义**）。 */
@@ -62,6 +89,36 @@ export function makeElementNode({
 /** 匹配用的文本池：自身文本 + 可读标签（控件通常只有标签）。 */
 export function haystack(node) {
   return [node.text, node.label].filter((part) => part && part.length > 0).join(" ").trim();
+}
+
+/** 文本归一：空白折叠为单空格 + 去首尾（口径单点，采集层与基准侧同语义）。 */
+export function normalizeWs(text) {
+  return String(text ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * 周边文本（`nearby-text`）的口径单点：**宿主元素的父容器文本 − 宿主元素文本**，归一空白后取前 `limit` 字符。
+ * 空串是合法证据（"这个区域确实没有别的文本"）。
+ *
+ * ⚠ 为什么要"按需翻倍前缀"而不是通篇归一：父容器文本可能很长（实测压力页：一个 `<ul>` 下 2500 行，
+ * 父文本 ~25k 字符 × 2500 个子节点 = 6 千万字符的正则归一 → 单页 1.3s，直接打挂 NFR-06 的 500ms 预算）。
+ * 归一只会让字符串**变短**（只折叠空白），故"原始前缀归一后 ≥ limit"时，其前 limit 字符与
+ * "全串归一后前 limit 字符"**逐字节相同**（末尾被 trim 的差异只可能出现在字符串末端，而这里没取到末端）。
+ * 语义与通篇归一等价，工作量为 O(limit × 常数)。
+ */
+export function limitNearText(ownText, parentText, limit = NEAR_TEXT_LIMIT) {
+  const own = String(ownText ?? "").trim();
+  const all = String(parentText ?? "").trim();
+  const stripped = own.length > 0 ? all.replace(own, "") : all;
+  let size = Math.min(stripped.length, limit * 2);
+  let normalized = normalizeWs(stripped.slice(0, size));
+  while (normalized.length < limit && size < stripped.length) {
+    size = Math.min(stripped.length, size * 2);
+    normalized = normalizeWs(stripped.slice(0, size));
+  }
+  return normalized.slice(0, limit);
 }
 
 // ── 证据登记表：每个 kind 一个取值函数；**取不到 → 返回 undefined → 该候选被丢弃**（不是降级）。

@@ -9,41 +9,13 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { collectSources, scanText, stripComments } from "./helpers/text.mjs";
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-
-export function collectSources(dir, out = []) {
-  for (const entry of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
-    const rel = `${dir}/${entry.name}`;
-    if (entry.isDirectory()) collectSources(rel, out);
-    else out.push(rel);
-  }
-  return out;
-}
-
-export function scanText(text, patterns) {
-  return patterns.filter(({ name, re }) => re.test(text)).map(({ name }) => name);
-}
-
-/**
- * 判据只看**代码**，不看注释与字符串外的说明文字：
- * 注释里写"本模块不碰 chrome API"不该被判成违规（判据要收窄到被测的那件事）。
- * 自证：剥离后仍必须留着代码 token（下面有测试断言），否则"剥离函数把整段吃空"会让判据假绿。
- */
-export function stripComments(text) {
-  return String(text)
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .split("\n")
-    .map((line) => {
-      // 行内 `//`（不处理字符串里的 // —— 本项目源码里没有这种形态，故不需要引号感知）
-      const index = line.indexOf("//");
-      return index >= 0 ? line.slice(0, index) : line;
-    })
-    .join("\n");
-}
 
 const NETWORK_PATTERNS = [
   { name: "外链 http://", re: /http:\/\// },
@@ -74,7 +46,7 @@ const READ_ONLY_PATTERNS = [
   { name: "现代剪贴板 API", re: /navigator\.clipboard/ },
 ];
 
-const SRC_FILES = collectSources("src");
+const SRC_FILES = collectSources(ROOT, "src");
 const LIB_FILES = SRC_FILES.filter((rel) => rel.startsWith("src/lib/"));
 const CONTENT_FILES = SRC_FILES.filter((rel) => rel.startsWith("src/content/"));
 

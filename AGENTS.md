@@ -42,6 +42,7 @@ npm run layout           # 布局门（本文件上方那条）
 npm run rules:hash       # 重算规则包内容哈希（写进 rules/manifest.json）
 npm run fixtures         # 生成 40 页合成 fixture + 真值（M1）
 npm run fixtures:check   # 再生成位级一致自证（M1）
+npm run bench            # 规则基准 B1–B7：12 规则 × 40 页逐样本点名（M2；rc=0 全达标）
 npm run build            # → dist/（可 Load unpacked 的扩展树 + 确定性 zip）
 node tools/check-release.mjs           # 发布终态自检（离线）
 node tools/check-release.mjs --online  # 终态（需远端，M6 用）

@@ -7,7 +7,7 @@
 - **版本**：v1（2026-10-17 题定稿；需求侧与开源检索基准日 2026-10-17）；M0 骨架落地 2026-10-18
 - **一句话定位**：点一下扩展图标，侧边栏列出当前页所有**可疑模式（待核对）**——规则名 + 原文片段 + 元素定位 + 严重度，页面上用编号徽标高亮取证，一键导出证据包。**做取证，不做打分**：无证据节点不产出结论。
 - **交付形态**：**唯一形态** = Chrome/Edge MV3 扩展（侧边栏 + 按需注入 content script + service worker），纯前端、无后端、无模型、无远程代码。不设备选形态。
-- **当前状态**：🟡 **M0（计划套件 + 可运行骨架）与 M1（数据先行：40 页合成 fixture + 真值 + 覆盖矩阵）完成**，M2–M6 未开工。台账状态列按**实际验证过的证据**翻转，未验证项保持 ⬜。
+- **当前状态**：🟡 **M0 / M1 / M2 完成**（M2 = 规则引擎与按需注入：引擎 + 采集器 + 注入链路 + B1–B7 基准双边达标），M3–M6 未开工。台账状态列按**实际验证过的证据**翻转，未验证项保持 ⬜。
 
 ---
 
@@ -28,10 +28,12 @@
 | `LICENSE` | MIT 许可（用户 2026-10-18 拍板，D23） | ✅ M0 |
 | `plan/HANDOFF-M1.md` | **启动第 1 棒时读的交接单**（M0 收尾时写） | ✅ M0 收尾 |
 | `plan/HANDOFF-M2.md` | **启动第 2 棒时读的交接单**（M1 收尾时写） | ✅ M1 收尾 |
+| `plan/HANDOFF-M3.md` | **启动第 3 棒时读的交接单**（M2 收尾时写） | ✅ M2 收尾 |
 | `plan/RELEASE-M6.md` | 发布留档（tag 前事实 / tag 后追加，两栏） | ⬜ 待 M6 |
-| `manifest.json` + `src/` | MV3 清单与扩展源码 | 🟡 骨架（M0） |
-| `rules/manifest.json` + `rules/dp-*.json` | 规则包版本/阈值（唯一数值真相源）+ 首批 12 条规则 | 🟡 规则数据落盘（M0），引擎待 M2 |
+| `manifest.json` + `src/` | MV3 清单与扩展源码（引擎/采集器/注入链路已接入） | 🟡 骨架 M0，引擎链路 M2，UI 待 M3–M5 |
+| `rules/manifest.json` + `rules/dp-*.json` | 规则包版本/阈值（唯一数值真相源）+ 首批 12 条规则 | ✅ 数据 M0 / 引擎接入 M2 |
 | `data/fixtures/` | 40 页合成 fixture + 逐页真值（`page-NN/truth.json`）+ 覆盖矩阵（`COVERAGE.md`）+ 压力页 | ✅ M1 |
+| `tools/bench-rules.mjs` + `tools/fixture-page-model.mjs` | 规则基准 runner（B1–B7）与 Node 侧页面模型解析器（独立于生成器） | ✅ M2 |
 | `docs/商店素材清单.md` + `assets/store/` | 商店素材清单与实物 | ⬜ 待 M5 |
 | `docs/隐私声明.md` | 隐私声明文本 | ⬜ 待 M5 |
 | `README.md` | 用户侧门面 | 🟡 骨架（M0），M5 定稿 |
@@ -83,6 +85,14 @@
 | D27 | **压力页规格入 manifest**：`thresholds.stress_node_count`（新增，值 5000） | 在生成器里写常量 5000 | `plan/05` §六 已定"fixture 规模只在 `rules/manifest.json`"；压力页节点数同属 fixture 规模，写进生成器就是**第二份数字**。新增键后重算 `ruleset_hash`（`npm run rules:hash`），并把键加进 `src/lib/rules.js` 的 `REQUIRED_THRESHOLD_KEYS`（缺了即拒绝加载） |
 | D28 | **"声明样式子集"只放非默认样式**：`style-map.json` 逐节点给出全部声明，HTML 只在**非默认**时写 `style="…"` | 每个元素都写一遍完整 `style` 属性 | 逐元素写全量 `style` 让产物膨胀数倍且噪声淹没真正可疑的那几处（6×6 关闭按钮、前景≈背景的按钮）。默认值单点在生成器 `BASE_STYLE`，模型侧缺失即取默认——`style-map.json` 仍是"声明样式子集"的完整落点 |
 
+### 2.4 M2 引擎与基准期决策（2026-10-19）
+
+| # | 决策 | 备选方案 | 结论与弃选理由 |
+|---|---|---|---|
+| D29 | **`label` 的自身文本回退只对控件生效**；普通元素只取显式标签属性（`aria-label`/`title`/`placeholder`/`alt`），**不取 `textContent`** | ①普通元素也用 `textContent` 回退（M1 遗留的建模缺口）②引擎侧按 `(rule_id, locator)` 去重来兜住重复命中 | **实测（反事实对照，断言常驻）**：缺口原样时 40 页基准产出 **133 条 finding / 85 条误报**——"允许 element 的文本级规则"（`dp-countdown-pressure`/`dp-anchored-discount`/`dp-exit-retention`/`dp-hidden-fee`）在每个祖先容器上重复命中，连 `html`/`body` 都命中（`body.label` = 整页文本），四条规则 precision 掉到 **0.1379~0.1667**，B1 双边门必红。**弃①**（会把误报写进模型层，且"文本的取证点"本就落在文本节点上）；**弃②作为唯一手段**（去重只在**同一 locator** 上生效，跨 locator 的祖先重复命中它挡不住）。口径**单点**落在 `src/lib/page-model.js` 的 `labelFrom()`，采集器/基准侧/生成器三处同调；反事实对照见 `tests/rules-bench.test.mjs`（常驻 2 项：恢复缺口形态 → 误报 ≥ 60 条 + 四条文本级规则 precision 必须掉到门槛以下） |
+| D30 | **同一 `(rule_id, locator)` 只出一条 finding**（先到先得 = 文档序在前者胜），被丢弃的候选记 `rejected[].reason = "duplicate_locator"` | 允许同一 locator 出多条（同规则重复计数） | 定位串 `tag:nth(i)` 的约定是"**文本节点的路径 = 其父元素路径**"（K24），于是文本节点与其宿主**控件**共用同一个 locator：若两条都产出，同一条证据在清单里出现两次（用户看到重复条目、导出也重复）。**弃"允许重复"**：清单要能当证据用，重复条目会让"几条证据"这个数失真。**丢弃必须可观测**（与 K3 的证据门禁同一纪律：丢弃 ≠ 静默跳过），故进 `rejected` 而不是直接 continue |
+| D31 | **周边文本用"按需翻倍前缀"归一**（`limitNearText`），不做通篇归一 | 逐节点对**整个父容器文本**做空白归一 | **实测**：压力页（5007 节点）里一个 `<ul>` 下有 2500 行，父文本 ~25k 字符 × 2500 子节点 ≈ 6 千万字符的正则归一 → 冷启动 **1313ms**，超 `first_result_budget_ms`（500ms）预算 2.6 倍。归一只让字符串**变短**（折叠空白），故"原始前缀归一后 ≥ limit"时其前 limit 字符与"全串归一后前 limit 字符"**逐字节相同** → 语义与通篇归一等价，工作量降到 O(limit×常数)（改后 **106.5ms**）。**弃通篇归一**（超预算即 NFR-06 不达标）；**弃"直接截原始串再归一"**（会在中间截断处制造"多一个少一个空格"的语义差） |
+
 ---
 
 ## 3A. 招牌动词表（能力名词 → 交付态入口 → 断言基准）
@@ -91,16 +101,16 @@
 
 | 能力名词 | 哪条交付态入口产出它 | 哪条基准/测试断言它 |
 | --- | --- | --- |
-| 可疑模式清单（findings） | 点击扩展图标 → sidePanel「开始扫描」（M1/M2） | `tests/rules-bench.test.mjs` 的逐规则 precision/recall 断言 |
-| 规则名 + 规则解释 | 同上；文本只从 `rules/dp-*.json` 读取（M2） | `tests/explanation-single-source.test.mjs`：`finding.explanation === 规则包 explanation` |
-| 原文片段（snippet） | 采集器从宿主文本节点原样截取（M2） | `tests/snippet-verbatim.test.mjs`：snippet 是宿主文本的原样子串 |
-| 元素定位（locator） | 采集器为每个节点生成稳定定位串（M2） | `tests/locator-resolve.test.mjs`：locator 可回解到唯一节点 |
-| 严重度（severity） | 规则包 `severity` 字段（M2） | `tests/severity-enum.test.mjs`：取值属于 `rules/manifest.json` 枚举 |
+| 可疑模式清单（findings） | 点击扩展图标 → sidePanel「开始扫描」（M2 引擎已通；UI 待 M4） | `tests/rules-bench.test.mjs` 的逐规则 precision/recall 断言（12/12 达标） |
+| 规则名 + 规则解释 | 同上；文本只从 `rules/dp-*.json` 读取（M2 已通） | `tests/rules-schema.test.mjs`（规则解释无越界词）+ 引擎逐字取规则包 `explanation` |
+| 原文片段（snippet） | 采集器从宿主文本节点原样截取（M2 已通） | `tests/snippet-verbatim.test.mjs` + 基准 B4（48 条逐条在 `page.html` 里） |
+| 元素定位（locator） | 采集器为每个节点生成稳定定位串（M2 已通） | 基准 B5：48 条 finding + 8 条 rejected 全部回解到节点；同一 `(rule_id, locator)` 只出一条（D30） |
+| 严重度（severity） | 规则包 `severity` 字段（M2 已通） | `tests/rules-schema.test.mjs`：取值属于 `rules/manifest.json` 枚举 |
 | 编号徽标高亮 | 扫描后自动注入覆盖层 / 侧边栏「在页面高亮」（M3） | `tests/overlay-dom-diff.test.mjs`：清除后页面 DOM diff = 0 |
 | 侧边栏取证台（四组分组） | 点击扩展图标打开 sidePanel（M4） | `tests/sidepanel-restore.test.mjs`：冷启动与 SW 被回收后恢复一致 |
 | 一键导出证据包 | 侧边栏「导出 Markdown / JSON」（M5） | `tests/export-fields.test.mjs` + 两次导出字节一致断言 |
 | 零网络请求 | 扫描 + 导出全流程（M5） | `tests/zero-network.test.mjs` + 浏览器冒烟的 resource 计数断言 |
-| 零注入 | 扩展安装后未点击前（M1） | `tests/no-injection-before-click.test.mjs`：manifest 无 `content_scripts`，且源码里无静态注入 |
+| 零注入 | 扩展安装后未点击前（M2 已通） | `tests/injection-chain.test.mjs`：manifest 无 `content_scripts`；黑名单站点 `executeScript` **一次都没被调用** |
 
 ---
 
@@ -127,19 +137,19 @@
 
 | 承诺项 | 素材来源 | 交付物内可达性 | 核验方式 | 状态 |
 | --- | --- | --- | --- | --- |
-| 12 条规则可解释、可逐条开关 | 自建规则包 `rules/dp-*.json`（素材来源 = 公开讨论中的具体手法描述，见 `plan/01` §1.1） | 扩展内打包，随包版本化 | `tests/rules-schema.test.mjs` + 侧边栏规则开关 | 🟡 规则数据已落盘（M0），开关待 M5 |
-| 无证据节点不产出 finding | 规则包 `evidence_required` 字段 | 判定核心内置门禁 | `tests/evidence-gate.test.mjs`：去掉证据节点后 finding 归零、进 `rejected[]` | 🟡 门禁骨架已通（M0），全量待 M2 |
-| 单规则 precision ≥ 0.90 / recall ≥ 0.80 | 40 页合成 fixture + 植入真值 | 基准脚本随仓 | `npm run verify`（门槛读 `rules/manifest.json`） | 🟡 fixture 与真值已落（M1，4 正 + 2 负/规则）；双边门待 M2 |
-| 未点击前零注入 | `activeTab` + `scripting` 按需注入 | manifest 无 `content_scripts` | `tests/no-injection-before-click.test.mjs` | 🟡 骨架断言在（M0） |
-| 点击到出结果 < 500ms（5k 节点页） | 合成 5k 节点页面（`data/fixtures/stress-5k/page.html`） | 单遍遍历 | `tests/latency-5k.test.mjs`（阈值读 `rules/manifest.json`） | 🟡 压力页已生成（M1，5007 节点）；耗时断言待 M2 |
-| 权限最小化 | manifest 白名单 | 交付物即 manifest | `tests/permissions-whitelist.test.mjs` 逐项比对 | 🟡 骨架断言在（M0） |
+| 12 条规则可解释、可逐条开关 | 自建规则包 `rules/dp-*.json`（素材来源 = 公开讨论中的具体手法描述，见 `plan/01` §1.1） | 扩展内打包，随包版本化 | `tests/rules-schema.test.mjs` + 侧边栏规则开关 | ✅ 数据与引擎（M0/M2），开关待 M5 |
+| 无证据节点不产出 finding | 规则包 `evidence_required` 字段 | 判定核心内置门禁 | `tests/engine-gate.test.mjs` + 基准 B2（8 类证据逐类断供 → 零产出 + `rejected` 非空 + 反向对照） | ✅ M2（语料侧此类候选实测 0 个，故用断供注入可证伪） |
+| 单规则 precision ≥ 0.90 / recall ≥ 0.80 | 40 页合成 fixture + 植入真值 | 基准脚本随仓 | `npm run bench` / `npm run verify`（门槛读 `rules/manifest.json`） | ✅ M2：12/12 规则达标（正 48 / 负 24 / finding 48 / 误报 0）+ 3 组探活全红 |
+| 未点击前零注入 | `activeTab` + `scripting` 按需注入 | manifest 无 `content_scripts` | `tests/injection-chain.test.mjs`（含否定性事实：黑名单站点零注入） | ✅ M2（浏览器冒烟仍未做，见 `plan/06` §五） |
+| 点击到出结果 < 500ms（5k 节点页） | 合成 5k 节点页面（`data/fixtures/stress-5k/page.html`） | 单遍遍历 | 基准 B7（阈值读 `rules/manifest.json`） | ✅ M2：5007 节点冷 106.5ms / 热 114.2ms（口径见 D31） |
+| 权限最小化 | manifest 白名单 | 交付物即 manifest | `tests/manifest-permissions.test.mjs` 逐项比对 | ✅ M2（白名单不变，M0 起常驻） |
 | 取证层清除后 DOM diff = 0 | Shadow DOM 覆盖层 | content script | `tests/overlay-dom-diff.test.mjs` | ⬜ 待 M3 |
 | 侧边栏冷启动 / SW 被回收后恢复 | `chrome.storage.session` | sidePanel + SW | `tests/sidepanel-restore.test.mjs` | ⬜ 待 M4 |
-| 导出 Markdown/JSON 字段完整且字节稳定 | Blob + `<a download>` | sidePanel 导出按钮 | `tests/export-fields.test.mjs` + 双跑字节一致 | 🟡 导出核心 + 双跑断言在（M0），UI 待 M5 |
+| 导出 Markdown/JSON 字段完整且字节稳定 | Blob + `<a download>` | sidePanel 导出按钮 | `tests/export.test.mjs` + 基准 B3（40 页双跑字节一致） | 🟡 导出核心 + 双跑断言在（M0），UI 待 M5 |
 | 整轮扫描 + 导出 0 次网络请求 | 只读 DOM，无 fetch | 全链路 | `tests/zero-network.test.mjs` + 浏览器冒烟 | ⬜ 待 M5 |
-| 文案统一"可疑模式（待核对）" | 文案单点 `src/lib/copy.js` | sidePanel + 导出 | `tests/copy-guard.test.mjs`：禁用词扫描 + 阳性对照 | 🟡 扫描在（M0），UI 待 M4/M5 |
+| 文案统一「可疑模式（待核对）」 | 文案单点 `src/lib/copy.js` | sidePanel + 导出 | `tests/copy-guard.test.mjs`：禁用词扫描 + 阳性对照 | 🟡 扫描在（M0），UI 待 M4/M5 |
 | 隐私声明与零采集一致 | `docs/隐私声明.md` | 文档 + 代码 | 人工对账 + 权限白名单断言 | ⬜ 待 M5 |
-| **零远程代码**（MV3 硬约束） | 无 CDN、无 fetch、规则随包 | 全链路 | `tests/source-hygiene.test.mjs`：源码与产物无 `http(s)://` 外链、无 `eval` | 🟡 扫描在（M0） |
+| **零远程代码**（MV3 硬约束） | 无 CDN、无 fetch、规则随包 | 全链路 | `tests/source-hygiene.test.mjs`：源码与产物无 `http(s)://` 外链、无 `eval` | ✅ 扫描常驻（M0 起，M2 增阈值 token 门禁） |
 
 ---
 
@@ -149,7 +159,7 @@
 | --- | --- | --- |
 | **M0 计划与可运行骨架** | 装订三件 + `plan/00`–`07` + `data/README` + 规则数据 + 骨架代码/测试/门/CI | ✅ 2026-10-18 |
 | **M1 数据先行** | 40 页合成 fixture + 逐页真值 + 覆盖矩阵 + 确定性生成器（`--check`） | ✅ 2026-10-19 |
-| **M2 规则引擎与按需注入** | `rules/manifest.json` 落地 + 12 条规则引擎 + 采集器 + 注入链路 + 基准达标 | ⬜ 未开始 |
+| **M2 规则引擎与按需注入** | `rules/manifest.json` 落地 + 12 条规则引擎 + 采集器 + 注入链路 + 基准达标 | ✅ 2026-10-19 |
 | **M3 页内取证高亮层** | Shadow DOM 覆盖层 + 编号徽标 + 双向联动 + 清除后 DOM diff = 0 | ⬜ 未开始 |
 | **M4 侧边栏取证台** | 四组分组 + `storage.session` 恢复 + 站点级折叠 | ⬜ 未开始 |
 | **M5 导出与设置** | Markdown/JSON 导出 + 黑白名单 + 规则开关 + README/隐私声明/商店素材 | ⬜ 未开始 |

@@ -26,10 +26,13 @@ import { fileURLToPath } from "node:url";
 import {
   collectEvidence,
   contrastRatio,
+  labelFrom,
+  limitNearText,
   makeElementNode,
   makeSnippet,
   makeTextNode,
   matchesDetect,
+  NEAR_TEXT_LIMIT,
 } from "../src/lib/page-model.js";
 import { RULESET, RULE_SPECS } from "../src/lib/rules-pack.js";
 import { orderedJsonText } from "../src/lib/serialize.js";
@@ -55,8 +58,7 @@ const FORBIDDEN_DOMAIN = /\b[a-z0-9][a-z0-9-]*\.(?:com|cn|net|org|io|co|shop|sto
 
 const PLACEHOLDER_PHONE = "19900000000";
 
-const NEAR_TEXT_LIMIT = 200;
-const TEXT_NODE_LIMIT = 400;
+const TEXT_NODE_LIMIT = NEAR_TEXT_LIMIT * 2;
 const SKIP_TAGS = new Set(["script", "style", "noscript", "template", "head", "meta", "link"]);
 const VOID_TAGS = new Set(["meta", "input", "link", "br", "img", "hr"]);
 const NO_STYLE_ATTR = new Set(["html", "head", "style", "title", "meta", "link", "br", "img", "hr"]);
@@ -183,30 +185,25 @@ export function renderDocument(root) {
 
 // ── 页面模型（与 src/content/collector.js 同语义：同为「渲染后 DOM → 归一化节点」的一层）──
 
-const normalizeWs = (text) => String(text).replace(/\s+/g, " ").trim();
-
+/** 文本内容带记忆化（树在一页内不变；压力页是扁平大列表，重复遍历是 O(n²)）。 */
+const textContentCache = new WeakMap();
 function textContentOf(node) {
   if (node.text !== undefined) return node.text;
   if (SKIP_TAGS.has(node.tag)) return "";
-  return node.children.map(textContentOf).join(" ");
+  const cached = textContentCache.get(node);
+  if (cached !== undefined) return cached;
+  const value = node.children.map(textContentOf).join(" ");
+  textContentCache.set(node, value);
+  return value;
 }
 
 function labelOf(node) {
-  for (const name of ["aria-label", "title", "placeholder", "alt"]) {
-    const value = node.attrs[name];
-    if (value && value.trim().length > 0) return value.trim().slice(0, NEAR_TEXT_LIMIT);
-  }
-  const own = textContentOf(node).trim();
-  if (own.length > 0) return own.slice(0, NEAR_TEXT_LIMIT);
-  const value = node.attrs.value;
-  return value && value.trim().length > 0 ? value.trim().slice(0, NEAR_TEXT_LIMIT) : "";
+  return labelFrom({ tag: node.tag, attrs: node.attrs, ownText: textContentOf(node) });
 }
 
 function nearTextOf(node, parent) {
   if (!parent) return "";
-  const own = textContentOf(node).trim();
-  const all = textContentOf(parent).trim();
-  return normalizeWs(all.replace(own, "")).slice(0, NEAR_TEXT_LIMIT);
+  return limitNearText(textContentOf(node), textContentOf(parent));
 }
 
 function styleOf(node, chain) {
@@ -788,7 +785,9 @@ export function renderReadme() {
     "- 定位串：`tag:nth(i)>tag:nth(i)`，`i` = 同标签兄弟中的下标；文本节点的路径 = 其父元素路径。",
     "- 文本节点：`text` 为宿主文本**原样**（仅去首尾空白），空白文本节点不产出。",
     "- `nearby-text`（周边文本）= **父元素文本内容减去本节点文本内容**（归一空白）；空串是合法证据（`nearby_absent_any` 判据依赖它）。",
-    "- 控件标签优先级：`aria-label` / `title` / `placeholder` / `alt` → 自身文本 → `value`。",
+    "- 控件标签优先级：`aria-label` / `title` / `placeholder` / `alt` → **控件**自身文本 → `value`；",
+    "  **普通元素不取自身文本作标签**（决策 D29：否则每个祖先容器都会带着子孙全文命中文本级规则，连 `body`/`html` 都命中；",
+    "  文本的取证点落在**文本节点**上，路径与宿主元素相同）；",
     "- `checked` 布尔属性归一为字符串 `true` / `false`。",
     "- 样式来自本目录 `style-map.json`（**声明的样式子集**，不是浏览器计算样式——该缺口在 `plan/03` §六 与 README 局限披露里写明）。",
     "",

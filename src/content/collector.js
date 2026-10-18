@@ -2,9 +2,8 @@
 // 与基准层（Node，合成 fixture）产出同一种节点对象（plan/03 §六）。
 // 注意：本文件不 import 时钟，时间由调用方注入（便于基准与测试）。
 
-import { contrastRatio, makeElementNode, makeTextNode } from "../lib/page-model.js";
+import { contrastRatio, labelFrom, limitNearText, makeElementNode, makeTextNode, NEAR_TEXT_LIMIT } from "../lib/page-model.js";
 
-export const NEAR_TEXT_LIMIT = 200;
 export const MAX_DEPTH = 64;
 const SKIP_TAGS = new Set(["script", "style", "noscript", "template", "head", "meta", "link"]);
 
@@ -97,22 +96,13 @@ function boxOf(element) {
 }
 
 function labelOf(element) {
-  for (const name of ["aria-label", "title", "placeholder", "alt"]) {
-    const value = element.getAttribute?.(name);
-    if (value && value.trim().length > 0) return value.trim().slice(0, NEAR_TEXT_LIMIT);
-  }
-  const own = (element.textContent ?? "").trim();
-  if (own.length > 0) return own.slice(0, NEAR_TEXT_LIMIT);
-  const value = element.getAttribute?.("value");
-  return value && value.trim().length > 0 ? value.trim().slice(0, NEAR_TEXT_LIMIT) : "";
+  return labelFrom({ tag: element.tagName, attrs: attrsOf(element), ownText: element.textContent ?? "" });
 }
 
 function nearTextOf(element) {
   const parent = element.parentElement;
   if (!parent) return "";
-  const own = (element.textContent ?? "").trim();
-  const all = (parent.textContent ?? "").trim();
-  return all.replace(own, "").replace(/\s+/g, " ").trim().slice(0, NEAR_TEXT_LIMIT);
+  return limitNearText(element.textContent ?? "", parent.textContent ?? "");
 }
 
 /**

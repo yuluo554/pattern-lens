@@ -14,6 +14,7 @@ import { assignFindingIds, sortFindings } from "./ordering.js";
 export const REJECT_REASON = {
   missingEvidence: "missing_evidence",
   suppressed: "suppressed",
+  duplicateLocator: "duplicate_locator",
 };
 
 /**
@@ -27,6 +28,10 @@ export function scanNodes(nodes, pack, options = {}) {
   const ordered = [...nodes].sort((left, right) => left.seq - right.seq);
   const findings = [];
   const rejected = [];
+  // 去重键：同一 (rule_id, locator) 只出一条（K26）。一个 locator 上可能有两个节点——
+  // 文本节点与其宿主**控件**元素共用同一个定位串（`tag:nth(i)` 的约定），若两条都产出，
+  // 同一条证据会在清单里出现两次。**先到先得**（文档序在前者胜），被丢弃的那条记 rejected（不静默）。
+  const claimed = new Set();
 
   for (const node of ordered) {
     for (const spec of pack.order) {
@@ -43,6 +48,17 @@ export function scanNodes(nodes, pack, options = {}) {
       }
       if (!verdict.matched) continue;
 
+      const key = `${spec.rule_id}|${node.path}`;
+      if (claimed.has(key)) {
+        rejected.push({
+          rule_id: spec.rule_id,
+          locator: node.path,
+          reason: REJECT_REASON.duplicateLocator,
+          missing_evidence: [],
+        });
+        break; // 同一 locator 已归属该规则：本节点不再参与更低优先级规则的匹配
+      }
+
       const { evidence, missing } = collectEvidence(node, spec.evidence_required);
       if (missing.length > 0) {
         rejected.push({
@@ -55,6 +71,7 @@ export function scanNodes(nodes, pack, options = {}) {
       }
 
       const { snippet, snippet_truncated } = makeSnippet(node, maxLen);
+      claimed.add(key);
       findings.push({
         rule_id: spec.rule_id,
         rule_name: spec.name,

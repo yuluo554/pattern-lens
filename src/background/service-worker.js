@@ -46,62 +46,67 @@ export async function storeLastScan(scan) {
   });
 }
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({ id: MENU_ID, title: "用界面取证镜检查本页", contexts: ["page"] });
-});
+/** 只有真的跑在扩展运行时里才挂监听（否则模块可被离线单测 import——注入链路必须能离线验收）。 */
+const HAS_RUNTIME = typeof chrome !== "undefined" && Boolean(chrome.runtime?.id);
 
-chrome.action.onClicked.addListener(async (tab) => {
-  await openPanel(tab);
-});
+if (HAS_RUNTIME) {
+  chrome.runtime.onInstalled.addListener(() => {
+    chrome.contextMenus.create({ id: MENU_ID, title: "用界面取证镜检查本页", contexts: ["page"] });
+  });
 
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId !== MENU_ID) return;
-  await openPanel(tab);
-  await startScan(tab.id, tab.url);
-});
+  chrome.action.onClicked.addListener(async (tab) => {
+    await openPanel(tab);
+  });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  (async () => {
-    if (message?.type === "start-scan") {
-      const tab = sender?.tab?.id ? sender.tab : await activeTab();
-      if (!tab?.id) return { status: "error", reason: "no_active_tab" };
-      const outcome = await startScan(tab.id, tab.url ?? message.url ?? "");
-      if (outcome.status === "blocked") {
-        await chrome.storage.session.set({ [LAST_SCAN_KEY]: { url: tab.url ?? "", blocked: outcome.reason } });
+  chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+    if (info.menuItemId !== MENU_ID) return;
+    await openPanel(tab);
+    await startScan(tab.id, tab.url);
+  });
+
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    (async () => {
+      if (message?.type === "start-scan") {
+        const tab = sender?.tab?.id ? sender.tab : await activeTab();
+        if (!tab?.id) return { status: "error", reason: "no_active_tab" };
+        const outcome = await startScan(tab.id, tab.url ?? message.url ?? "");
+        if (outcome.status === "blocked") {
+          await chrome.storage.session.set({ [LAST_SCAN_KEY]: { url: tab.url ?? "", blocked: outcome.reason } });
+        }
+        return outcome;
       }
-      return outcome;
-    }
-    if (message?.type === "scan-result" && message.outcome?.scan) {
-      await storeLastScan(message.outcome.scan);
-      return { status: "stored" };
-    }
-    if (message?.type === "scan-error") {
-      await chrome.storage.session.set({ [LAST_SCAN_KEY]: { error: message.reason ?? "unknown" } });
-      return { status: "error_recorded" };
-    }
-    if (message?.type === "get-last-scan") {
-      return await chrome.storage.session.get(LAST_SCAN_KEY);
-    }
-    if (message?.type === "current-url") {
-      const tab = await activeTab();
-      return { url: tab?.url ?? "" };
-    }
-    if (message?.type === "get-ruleset") {
-      return { version: RULESET.ruleset_version, hash: RULESET.ruleset_hash, rule_count: RULESET.rule_files.length };
-    }
-    if (message?.type === "clear-overlay" || message?.type === "focus-finding" || message?.type === "apply-overlay") {
-      const tab = await activeTab();
-      if (!tab?.id) return { status: "error", reason: "no_active_tab" };
-      try {
-        await chrome.tabs.sendMessage(tab.id, message);
-        return { status: "forwarded" };
-      } catch (error) {
-        return { status: "error", reason: `forward_failed: ${String(error?.message ?? error)}` };
+      if (message?.type === "scan-result" && message.outcome?.scan) {
+        await storeLastScan(message.outcome.scan);
+        return { status: "stored" };
       }
-    }
-    return { status: "ignored" };
-  })()
-    .then(sendResponse)
-    .catch((error) => sendResponse({ status: "error", reason: String(error?.message ?? error) }));
-  return true;
-});
+      if (message?.type === "scan-error") {
+        await chrome.storage.session.set({ [LAST_SCAN_KEY]: { error: message.reason ?? "unknown" } });
+        return { status: "error_recorded" };
+      }
+      if (message?.type === "get-last-scan") {
+        return await chrome.storage.session.get(LAST_SCAN_KEY);
+      }
+      if (message?.type === "current-url") {
+        const tab = await activeTab();
+        return { url: tab?.url ?? "" };
+      }
+      if (message?.type === "get-ruleset") {
+        return { version: RULESET.ruleset_version, hash: RULESET.ruleset_hash, rule_count: RULESET.rule_files.length };
+      }
+      if (message?.type === "clear-overlay" || message?.type === "focus-finding" || message?.type === "apply-overlay") {
+        const tab = await activeTab();
+        if (!tab?.id) return { status: "error", reason: "no_active_tab" };
+        try {
+          await chrome.tabs.sendMessage(tab.id, message);
+          return { status: "forwarded" };
+        } catch (error) {
+          return { status: "error", reason: `forward_failed: ${String(error?.message ?? error)}` };
+        }
+      }
+      return { status: "ignored" };
+    })()
+      .then(sendResponse)
+      .catch((error) => sendResponse({ status: "error", reason: String(error?.message ?? error) }));
+    return true;
+  });
+}
