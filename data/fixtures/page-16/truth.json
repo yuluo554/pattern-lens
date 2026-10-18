@@ -1,0 +1,14 @@
+{
+  "page": "page-16",
+  "site": "示例商城（虚构）",
+  "url": "https://fixture.local/page-16.html",
+  "positives": [
+    {
+      "rule_id": "dp-fake-scarcity",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "即将售罄，尽快下单",
+      "note": "稀缺表述，周边无来源"
+    }
+  ],
+  "negatives": []
+}

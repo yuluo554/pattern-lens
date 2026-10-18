@@ -1,0 +1,14 @@
+{
+  "page": "page-40",
+  "site": "样例会员（虚构）",
+  "url": "https://fixture.local/page-40.html",
+  "positives": [
+    {
+      "rule_id": "dp-hidden-fee",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "包装费 2 元，另计价",
+      "note": "包装费后置出现"
+    }
+  ],
+  "negatives": []
+}

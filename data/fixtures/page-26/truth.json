@@ -1,0 +1,21 @@
+{
+  "page": "page-26",
+  "site": "示例商城（虚构）",
+  "url": "https://fixture.local/page-26.html",
+  "positives": [
+    {
+      "rule_id": "dp-default-addon",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>input:nth(0)",
+      "snippet_expected": "一起买配件套装",
+      "note": "搭售项加载即勾选（一起买）"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-exit-retention",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "返回购物车",
+      "note": "返回型文案，但不是挽留"
+    }
+  ]
+}

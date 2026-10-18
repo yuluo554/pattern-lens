@@ -1,0 +1,21 @@
+{
+  "page": "page-32",
+  "site": "样例电器（虚构）",
+  "url": "https://fixture.local/page-32.html",
+  "positives": [
+    {
+      "rule_id": "dp-exit-retention",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "留下即可领优惠",
+      "note": "挽留型文案（留下+优惠）"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-subscription-trap",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "退订请拨打客服热线",
+      "note": "同样指向客服，但同区域提供了自助入口"
+    }
+  ]
+}

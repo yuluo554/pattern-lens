@@ -1,0 +1,14 @@
+{
+  "page": "page-09",
+  "site": "演示订阅（虚构）",
+  "url": "https://example.invalid/page-09.html",
+  "positives": [
+    {
+      "rule_id": "dp-countdown-pressure",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "限时 02:45 结束",
+      "note": "倒计时形态文本（时分）"
+    }
+  ],
+  "negatives": []
+}

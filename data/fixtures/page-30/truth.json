@@ -1,0 +1,21 @@
+{
+  "page": "page-30",
+  "site": "样例会员（虚构）",
+  "url": "https://fixture.local/page-30.html",
+  "positives": [
+    {
+      "rule_id": "dp-exit-retention",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "确定放弃本次订单？",
+      "note": "挽留型确认文案"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-hidden-close",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>button:nth(0)",
+      "snippet_expected": "关闭",
+      "note": "尺寸与对比度都在正常范围"
+    }
+  ]
+}

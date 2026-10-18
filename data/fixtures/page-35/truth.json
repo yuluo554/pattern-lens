@@ -1,0 +1,21 @@
+{
+  "page": "page-35",
+  "site": "样例会员（虚构）",
+  "url": "https://example.invalid/page-35.html",
+  "positives": [
+    {
+      "rule_id": "dp-subscription-trap",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "解约需前往门店办理",
+      "note": "解约渠道指向门店，周边无在线入口"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-hidden-fee",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "商品 88 元，合计 88 元（含全部费用）",
+      "note": "价格区块一次性给出合计：不含后置费用"
+    }
+  ]
+}

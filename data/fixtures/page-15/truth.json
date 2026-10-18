@@ -1,0 +1,14 @@
+{
+  "page": "page-15",
+  "site": "样例会员（虚构）",
+  "url": "https://example.invalid/page-15.html",
+  "positives": [
+    {
+      "rule_id": "dp-fake-scarcity",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "库存仅 3 套",
+      "note": "数量稀缺表述，周边无来源"
+    }
+  ],
+  "negatives": []
+}

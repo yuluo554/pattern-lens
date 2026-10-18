@@ -1,0 +1,14 @@
+{
+  "page": "page-18",
+  "site": "演示票务（虚构）",
+  "url": "https://fixture.local/page-18.html",
+  "positives": [
+    {
+      "rule_id": "dp-confirmshaming",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "继续以原价购买",
+      "note": "把拒绝写成「继续原价」"
+    }
+  ],
+  "negatives": []
+}

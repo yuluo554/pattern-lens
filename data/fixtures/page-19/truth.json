@@ -1,0 +1,14 @@
+{
+  "page": "page-19",
+  "site": "演示订阅（虚构）",
+  "url": "https://example.invalid/page-19.html",
+  "positives": [
+    {
+      "rule_id": "dp-confirmshaming",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "还是不要优惠了",
+      "note": "把拒绝写成「不要优惠」"
+    }
+  ],
+  "negatives": []
+}

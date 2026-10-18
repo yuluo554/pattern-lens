@@ -1,0 +1,20 @@
+{
+  "page": "page-03",
+  "site": "演示票务（虚构）",
+  "url": "https://example.invalid/page-03.html",
+  "positives": [
+    {
+      "rule_id": "dp-prechecked-optin",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>input:nth(0)",
+      "snippet_expected": "订阅每月资讯",
+      "note": "加载即勾选；标签指向订阅"
+    },
+    {
+      "rule_id": "dp-forced-signup",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "仅会员可见价格",
+      "note": "把可见性与会员身份绑定"
+    }
+  ],
+  "negatives": []
+}

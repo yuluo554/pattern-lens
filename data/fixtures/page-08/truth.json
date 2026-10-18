@@ -1,0 +1,27 @@
+{
+  "page": "page-08",
+  "site": "演示票务（虚构）",
+  "url": "https://fixture.local/page-08.html",
+  "positives": [
+    {
+      "rule_id": "dp-hidden-close",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>button:nth(0)",
+      "snippet_expected": "稍后",
+      "note": "稍后控件可点击尺寸 4x12（极小）"
+    },
+    {
+      "rule_id": "dp-dark-close",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>button:nth(0)",
+      "snippet_expected": "关闭",
+      "note": "关闭控件对比度低于阈值"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-confirmshaming",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(2)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "继续浏览商品",
+      "note": "中性继续文案：不构成确认羞辱"
+    }
+  ]
+}

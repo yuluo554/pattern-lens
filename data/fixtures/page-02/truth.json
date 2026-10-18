@@ -1,0 +1,27 @@
+{
+  "page": "page-02",
+  "site": "样例电器（虚构）",
+  "url": "https://fixture.local/page-02.html",
+  "positives": [
+    {
+      "rule_id": "dp-prechecked-optin",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>input:nth(0)",
+      "snippet_expected": "加入保价服务",
+      "note": "加载即勾选；标签指向保价服务"
+    },
+    {
+      "rule_id": "dp-forced-signup",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "登录后即可浏览商品详情",
+      "note": "把浏览与登录绑定"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-fake-scarcity",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(2)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "即将售罄",
+      "note": "稀缺表述，但同区域给出了可核对来源"
+    }
+  ]
+}

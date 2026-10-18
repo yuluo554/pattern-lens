@@ -11,15 +11,15 @@ Chrome / Edge **Manifest V3** 浏览器扩展 · 零后端 · 零第三方依赖
 | 里程碑 | 内容 | 状态 |
 | --- | --- | --- |
 | M0 | 计划套件 + 方法论装订 + 可运行骨架（规则数据 / 判定核心 / 导出 / 门 / CI） | ✅ 2026-10-18 |
-| M1 | 数据先行：40 页合成 fixture + 逐页真值 + 覆盖矩阵 + 确定性生成器 | ⬜ 未开始 |
+| M1 | 数据先行：40 页合成 fixture + 逐页真值 + 覆盖矩阵 + 确定性生成器 | ✅ 2026-10-19 |
 | M2 | 规则引擎与按需注入：12 条规则双边达标、证据门禁、权限白名单 | ⬜ 未开始 |
 | M3 | 页内取证高亮层：Shadow DOM 覆盖层 + 编号徽标 + 双向联动 | ⬜ 未开始 |
 | M4 | 侧边栏取证台：四组分组 + `storage.session` 恢复 | ⬜ 未开始 |
 | M5 | 导出与设置：Markdown/JSON 导出、黑白名单、规则开关、隐私声明 | ⬜ 未开始 |
 | M6 | 发布：公开仓库 + `v0.1.0` tag + Release（确定性 zip）+ 发布留档 | ⬜ 未开始 |
 
-> **当前状态：M0（计划与可运行骨架）完成，M1–M6 未开工**——扩展目前**还不能真扫页面**，
-> 已可用的是规则数据、判定核心（含证据门禁）、导出核心、布局门与测试套件。
+> **当前状态：M0（计划与可运行骨架）与 M1（数据先行：40 页合成 fixture + 逐页真值 + 覆盖矩阵）完成，M2–M6 未开工**——
+> 扩展目前**还不能真扫页面**，已可用的是规则数据、判定核心（含证据门禁）、导出核心、合成 fixture 基准底座、布局门与测试套件。
 > 里程碑细节与已知未验证项见 [`plan/06-里程碑与每周演示.md`](plan/06-里程碑与每周演示.md)。
 
 ## 快速开始（当前仅骨架，M2 起可 Load unpacked）
@@ -29,9 +29,14 @@ node --version        # 需要 >= 22（本项目在 v24.15.0 实测）
 npm run layout        # 布局门：项目是否仍长在方法论上（AGENTS.md 那条；续接对话第一件事）
 npm test              # 全部测试（node --test，零依赖，不需要 npm install）
 npm run verify        # 一条命令全量自检（rc=0 全绿；未启用段以 not_enabled 显式列出）
+npm run fixtures      # 生成 40 页合成 fixture + 逐页真值 + 覆盖矩阵（data/fixtures/）
+npm run fixtures:check# 再生成位级比对（冻结产物与重生成结果逐字节一致）
 npm run rules:hash    # 重算规则包内容哈希，写回 rules/manifest.json
 npm run build         # → dist/（可 Load unpacked 的扩展树）+ 确定性 zip（M6 的发布附件）
 ```
+
+> fixture 是**生成物**：手工改了页面就得同步改同目录 `truth.json`，否则 `npm run fixtures:check` 会红。
+> 想直接看植入的可疑模式：浏览器打开任一 `data/fixtures/page-NN/page.html`（如 6×6 的"关闭"按钮、前景≈背景的关闭控件）。
 
 > 本项目遵循 [`ai-tool-project-sprint`](AGENTS.md) 方法论（装订 2026-10-18）：
 > 仓库锚点见 [`AGENTS.md`](AGENTS.md)，布局门 `tools/check-sprint-layout.mjs` 在 CI 里有一条步骤。

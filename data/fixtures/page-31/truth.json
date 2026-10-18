@@ -1,0 +1,14 @@
+{
+  "page": "page-31",
+  "site": "示例商城（虚构）",
+  "url": "https://example.invalid/page-31.html",
+  "positives": [
+    {
+      "rule_id": "dp-exit-retention",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "再想想，购物车先留着",
+      "note": "挽留型文案（再想想）"
+    }
+  ],
+  "negatives": []
+}

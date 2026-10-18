@@ -1,0 +1,21 @@
+{
+  "page": "page-29",
+  "site": "演示订阅（虚构）",
+  "url": "https://example.invalid/page-29.html",
+  "positives": [
+    {
+      "rule_id": "dp-exit-retention",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "确定要离开吗？",
+      "note": "挽留型确认文案"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-subscription-trap",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "如需取消订阅，请致电客服热线",
+      "note": "同样指向电话，但同区域提供了在线自助入口"
+    }
+  ]
+}

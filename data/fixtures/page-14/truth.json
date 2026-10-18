@@ -1,0 +1,21 @@
+{
+  "page": "page-14",
+  "site": "演示订阅（虚构）",
+  "url": "https://fixture.local/page-14.html",
+  "positives": [
+    {
+      "rule_id": "dp-fake-scarcity",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "只剩 1 件",
+      "note": "数量稀缺表述，周边无来源"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-anchored-discount",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "划线价 ¥499，优惠价 ¥299",
+      "note": "并列两个价格，但同区域可查历史价格"
+    }
+  ]
+}

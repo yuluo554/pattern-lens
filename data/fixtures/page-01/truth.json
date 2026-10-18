@@ -1,0 +1,27 @@
+{
+  "page": "page-01",
+  "site": "示例商城（虚构）",
+  "url": "https://example.invalid/page-01.html",
+  "positives": [
+    {
+      "rule_id": "dp-prechecked-optin",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>input:nth(0)",
+      "snippet_expected": "自动续订会员",
+      "note": "加载即勾选；标签指向续订会员"
+    },
+    {
+      "rule_id": "dp-forced-signup",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "注册后才能查看完整评价",
+      "note": "把查看评价与注册绑定"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-forced-signup",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(2)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "注册即可领取新客券",
+      "note": "注册只关联优惠券，不作为查看/购买前置"
+    }
+  ]
+}

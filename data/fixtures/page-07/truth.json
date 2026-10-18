@@ -1,0 +1,27 @@
+{
+  "page": "page-07",
+  "site": "样例电器（虚构）",
+  "url": "https://example.invalid/page-07.html",
+  "positives": [
+    {
+      "rule_id": "dp-hidden-close",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>button:nth(0)",
+      "snippet_expected": "取消",
+      "note": "取消控件前景色与背景色相同"
+    },
+    {
+      "rule_id": "dp-dark-close",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>button:nth(0)",
+      "snippet_expected": "跳过",
+      "note": "跳过控件整体透明度 0.3"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-dark-close",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(2)>div:nth(0)>button:nth(0)",
+      "snippet_expected": "关闭",
+      "note": "对比度充足、透明度正常：不构成低对比关闭"
+    }
+  ]
+}

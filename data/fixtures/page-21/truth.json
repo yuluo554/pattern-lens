@@ -1,0 +1,21 @@
+{
+  "page": "page-21",
+  "site": "示例商城（虚构）",
+  "url": "https://example.invalid/page-21.html",
+  "positives": [
+    {
+      "rule_id": "dp-anchored-discount",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "原价 ¥299 现价 ¥199",
+      "note": "并列划线价与现价，周边无价格来源"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-prechecked-optin",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>input:nth(0)",
+      "snippet_expected": "自动续订会员",
+      "note": "同类订阅复选框，但加载时未勾选"
+    }
+  ]
+}

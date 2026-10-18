@@ -3,7 +3,7 @@
 
 export const RULESET = {
   "ruleset_version": "0.1.0",
-  "ruleset_hash": "0b5805c7088db4799453191093925023d0a7149f453d302f93a2a2c29c106aed",
+  "ruleset_hash": "b81d12e89a43f1144b8f10d9ca1908919c247c7ee07250dd7b9f3010a642ce51",
   "rule_files": [
     "dp-01-prechecked-optin.json",
     "dp-02-hidden-close.json",
@@ -36,6 +36,7 @@ export const RULESET = {
     "scan_timeout_ms": 2000,
     "first_result_budget_ms": 500,
     "fixture_page_count": 40,
+    "stress_node_count": 5000,
     "snippet_max_len": 160
   },
   "match_priority": [

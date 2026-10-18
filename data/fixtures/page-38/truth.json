@@ -1,0 +1,21 @@
+{
+  "page": "page-38",
+  "site": "演示票务（虚构）",
+  "url": "https://fixture.local/page-38.html",
+  "positives": [
+    {
+      "rule_id": "dp-hidden-fee",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "配送费 8 元，下单时另计",
+      "note": "配送费后置出现"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-hidden-fee",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "价格明细：商品 88 元 + 运费 0 元",
+      "note": "价格区块一次性给出明细：不含后置费用"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "page": "page-36",
+  "site": "示例商城（虚构）",
+  "url": "https://fixture.local/page-36.html",
+  "positives": [
+    {
+      "rule_id": "dp-subscription-trap",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "取消会员请电话联系",
+      "note": "取消渠道指向电话，周边无在线入口"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-countdown-pressure",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "活动回顾：倒计时 10 分钟",
+      "note": "活动回顾文案（中和项）"
+    }
+  ]
+}

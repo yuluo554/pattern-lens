@@ -1,0 +1,136 @@
+{
+  "page": "page-21",
+  "url": "https://example.invalid/page-21.html",
+  "site": "示例商城（虚构）",
+  "selector_convention": "tag:nth(i) —— i 为同标签兄弟中的下标（与 src/content/collector.js 的定位串一致）",
+  "styles": {
+    "html:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>head:nth(0)>title:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>header:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>header:nth(0)>h1:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>header:nth(0)>p:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>main:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>h2:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>h2:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>input:nth(0)": {
+      "display": "inline-block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16,
+      "widthPx": 16,
+      "heightPx": 16
+    },
+    "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>span:nth(0)": {
+      "display": "inline",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>footer:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    },
+    "html:nth(0)>body:nth(0)>footer:nth(0)>p:nth(0)": {
+      "display": "block",
+      "color": "#1f2937",
+      "backgroundColor": "#ffffff",
+      "opacity": 1,
+      "fontSizePx": 16
+    }
+  }
+}

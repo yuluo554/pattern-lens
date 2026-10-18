@@ -7,7 +7,7 @@
 - **版本**：v1（2026-10-17 题定稿；需求侧与开源检索基准日 2026-10-17）；M0 骨架落地 2026-10-18
 - **一句话定位**：点一下扩展图标，侧边栏列出当前页所有**可疑模式（待核对）**——规则名 + 原文片段 + 元素定位 + 严重度，页面上用编号徽标高亮取证，一键导出证据包。**做取证，不做打分**：无证据节点不产出结论。
 - **交付形态**：**唯一形态** = Chrome/Edge MV3 扩展（侧边栏 + 按需注入 content script + service worker），纯前端、无后端、无模型、无远程代码。不设备选形态。
-- **当前状态**：🟡 **M0（计划套件 + 可运行骨架）完成**，M1–M6 未开工。台账状态列按**实际验证过的证据**翻转，未验证项保持 ⬜。
+- **当前状态**：🟡 **M0（计划套件 + 可运行骨架）与 M1（数据先行：40 页合成 fixture + 真值 + 覆盖矩阵）完成**，M2–M6 未开工。台账状态列按**实际验证过的证据**翻转，未验证项保持 ⬜。
 
 ---
 
@@ -27,10 +27,11 @@
 | `AGENTS.md` + `tools/check-sprint-layout.mjs` | **方法论装订**：仓库锚点 + 布局门（阶段 0 第零步） | ✅ 2026-10-18 |
 | `LICENSE` | MIT 许可（用户 2026-10-18 拍板，D23） | ✅ M0 |
 | `plan/HANDOFF-M1.md` | **启动第 1 棒时读的交接单**（M0 收尾时写） | ✅ M0 收尾 |
+| `plan/HANDOFF-M2.md` | **启动第 2 棒时读的交接单**（M1 收尾时写） | ✅ M1 收尾 |
 | `plan/RELEASE-M6.md` | 发布留档（tag 前事实 / tag 后追加，两栏） | ⬜ 待 M6 |
 | `manifest.json` + `src/` | MV3 清单与扩展源码 | 🟡 骨架（M0） |
 | `rules/manifest.json` + `rules/dp-*.json` | 规则包版本/阈值（唯一数值真相源）+ 首批 12 条规则 | 🟡 规则数据落盘（M0），引擎待 M2 |
-| `data/fixtures/` + `data/fixtures/truth/` | 40 页合成 fixture 与逐页真值 | ⬜ 待 M1 |
+| `data/fixtures/` | 40 页合成 fixture + 逐页真值（`page-NN/truth.json`）+ 覆盖矩阵（`COVERAGE.md`）+ 压力页 | ✅ M1 |
 | `docs/商店素材清单.md` + `assets/store/` | 商店素材清单与实物 | ⬜ 待 M5 |
 | `docs/隐私声明.md` | 隐私声明文本 | ⬜ 待 M5 |
 | `README.md` | 用户侧门面 | 🟡 骨架（M0），M5 定稿 |
@@ -73,6 +74,15 @@
 | D24 | **基准按 D15 执行（Node 纯核心 + 浏览器冒烟可选）** | 引入 playwright / puppeteer 作为 devDependency | 用户 2026-10-18 确认：**保住「git clone 后不装包即可 `npm test`」**；真实渲染路径的缺口写进 README 局限披露与 `plan/06` §五，不冒充已验 |
 | D21 | **源码卫生判据只扫剥注释后的代码**（注释不是行为） | 直接扫原文 | 判据扫原文时，注释里"本模块不碰扩展 API"这类说明文字会被判成违规（**判据张冠李戴**）。正解 = 剥离注释后再扫，并配两条自证：① 剥离后仍留代码 token（防"剥离函数吃空整段"造成假绿）；② 注入的真违规仍被抓住（阳性对照） |
 
+### 2.3 M1 数据先期决策（2026-10-19）
+
+| # | 决策 | 备选方案 | 结论与弃选理由 |
+|---|---|---|---|
+| D25 | **真值落在页目录内**：`data/fixtures/page-NN/truth.json`（+ 同目录 `style-map.json`） | ①集中目录 `data/fixtures/truth/page-NN.json` | `plan/01` §三 与 `plan/05` §一 G3 原写"`data/fixtures/truth/`"，而 `plan/04` M1 与 `plan/HANDOFF-M1.md` §2 写的是页目录三件套。**统一为页目录三件套**（真值与它描述的页面同目录，改页面必须同改真值，`fixtures:check` 立刻发现）；`plan/01` 属题面定稿不改写，本条即其勘误，判据以本条为准 |
+| D26 | **真值文档形态 = `{page, site, url, positives[], negatives[]}`**，两类条目形态**统一** = `{rule_id, selector_path, snippet_expected, note?}`（正/负由所在数组决定，不靠额外字段） | ①单数组（只装正样本）②正负条目各自一套字段（负样本不带 `snippet_expected`） | 负样本（"看起来像但按规则不成立"）必须**可数可复算**，否则覆盖矩阵的"负样本计数"只能手编（`plan/05` §二.4 要求它存在）。弃"两套字段"：统一后守门对两类条目用**同一个校验器**（键白名单 / snippet 原样 / 独立回解），少一套特例，且 `snippet_expected` 对负样本同样是可复核的锚点。**任何层级禁止 `observed_*` / `matched` / `detected` 一类字段**（冻结观测会让基准退化成比对两份预先算好的答案） |
+| D27 | **压力页规格入 manifest**：`thresholds.stress_node_count`（新增，值 5000） | 在生成器里写常量 5000 | `plan/05` §六 已定"fixture 规模只在 `rules/manifest.json`"；压力页节点数同属 fixture 规模，写进生成器就是**第二份数字**。新增键后重算 `ruleset_hash`（`npm run rules:hash`），并把键加进 `src/lib/rules.js` 的 `REQUIRED_THRESHOLD_KEYS`（缺了即拒绝加载） |
+| D28 | **"声明样式子集"只放非默认样式**：`style-map.json` 逐节点给出全部声明，HTML 只在**非默认**时写 `style="…"` | 每个元素都写一遍完整 `style` 属性 | 逐元素写全量 `style` 让产物膨胀数倍且噪声淹没真正可疑的那几处（6×6 关闭按钮、前景≈背景的按钮）。默认值单点在生成器 `BASE_STYLE`，模型侧缺失即取默认——`style-map.json` 仍是"声明样式子集"的完整落点 |
+
 ---
 
 ## 3A. 招牌动词表（能力名词 → 交付态入口 → 断言基准）
@@ -102,7 +112,7 @@
 | 扩展源码 | `src/background/service-worker.js`、`src/content/scanner.js`、`src/sidepanel/`、`src/lib/` | M1/M3/M4 | `git ls-files src` |
 | 目录结构说明 | `docs/目录结构说明.md` | M5 | `git ls-files docs/目录结构说明.md` |
 | 规则包 | `rules/dp-*.json` + `rules/manifest.json` | M0（数据）/ M2（引擎） | `git ls-files rules` |
-| 合成 fixture 与真值 | `data/fixtures/` + `data/fixtures/truth/` | M1 | `git ls-files data/fixtures` |
+| 合成 fixture 与真值 | `data/fixtures/page-NN/{page.html,style-map.json,truth.json}` + `data/fixtures/COVERAGE.md` | M1 | `git ls-files data/fixtures` + `npm run fixtures:check` |
 | 商店素材清单与实物 | `docs/商店素材清单.md` + `assets/store/` | M5 | `git ls-files docs/商店素材清单.md assets/store` |
 | 隐私声明 | `docs/隐私声明.md` | M5 | `git ls-files docs/隐私声明.md` |
 | 测试套件 | `tests/` | M0–M5 | `git ls-files tests` + `npm test` |
@@ -119,9 +129,9 @@
 | --- | --- | --- | --- | --- |
 | 12 条规则可解释、可逐条开关 | 自建规则包 `rules/dp-*.json`（素材来源 = 公开讨论中的具体手法描述，见 `plan/01` §1.1） | 扩展内打包，随包版本化 | `tests/rules-schema.test.mjs` + 侧边栏规则开关 | 🟡 规则数据已落盘（M0），开关待 M5 |
 | 无证据节点不产出 finding | 规则包 `evidence_required` 字段 | 判定核心内置门禁 | `tests/evidence-gate.test.mjs`：去掉证据节点后 finding 归零、进 `rejected[]` | 🟡 门禁骨架已通（M0），全量待 M2 |
-| 单规则 precision ≥ 0.90 / recall ≥ 0.80 | 40 页合成 fixture + 植入真值 | 基准脚本随仓 | `npm run verify`（门槛读 `rules/manifest.json`） | ⬜ 待 M2 |
+| 单规则 precision ≥ 0.90 / recall ≥ 0.80 | 40 页合成 fixture + 植入真值 | 基准脚本随仓 | `npm run verify`（门槛读 `rules/manifest.json`） | 🟡 fixture 与真值已落（M1，4 正 + 2 负/规则）；双边门待 M2 |
 | 未点击前零注入 | `activeTab` + `scripting` 按需注入 | manifest 无 `content_scripts` | `tests/no-injection-before-click.test.mjs` | 🟡 骨架断言在（M0） |
-| 点击到出结果 < 500ms（5k 节点页） | 合成 5k 节点页面 | 单遍遍历 | `tests/latency-5k.test.mjs`（阈值读 `rules/manifest.json`） | ⬜ 待 M2 |
+| 点击到出结果 < 500ms（5k 节点页） | 合成 5k 节点页面（`data/fixtures/stress-5k/page.html`） | 单遍遍历 | `tests/latency-5k.test.mjs`（阈值读 `rules/manifest.json`） | 🟡 压力页已生成（M1，5007 节点）；耗时断言待 M2 |
 | 权限最小化 | manifest 白名单 | 交付物即 manifest | `tests/permissions-whitelist.test.mjs` 逐项比对 | 🟡 骨架断言在（M0） |
 | 取证层清除后 DOM diff = 0 | Shadow DOM 覆盖层 | content script | `tests/overlay-dom-diff.test.mjs` | ⬜ 待 M3 |
 | 侧边栏冷启动 / SW 被回收后恢复 | `chrome.storage.session` | sidePanel + SW | `tests/sidepanel-restore.test.mjs` | ⬜ 待 M4 |
@@ -138,7 +148,7 @@
 | 里程碑 | 内容 | 状态 |
 | --- | --- | --- |
 | **M0 计划与可运行骨架** | 装订三件 + `plan/00`–`07` + `data/README` + 规则数据 + 骨架代码/测试/门/CI | ✅ 2026-10-18 |
-| **M1 数据先行** | 40 页合成 fixture + 逐页真值 + 覆盖矩阵 + 确定性生成器（`--check`） | ⬜ 未开始 |
+| **M1 数据先行** | 40 页合成 fixture + 逐页真值 + 覆盖矩阵 + 确定性生成器（`--check`） | ✅ 2026-10-19 |
 | **M2 规则引擎与按需注入** | `rules/manifest.json` 落地 + 12 条规则引擎 + 采集器 + 注入链路 + 基准达标 | ⬜ 未开始 |
 | **M3 页内取证高亮层** | Shadow DOM 覆盖层 + 编号徽标 + 双向联动 + 清除后 DOM diff = 0 | ⬜ 未开始 |
 | **M4 侧边栏取证台** | 四组分组 + `storage.session` 恢复 + 站点级折叠 | ⬜ 未开始 |

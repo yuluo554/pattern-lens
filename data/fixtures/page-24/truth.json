@@ -1,0 +1,21 @@
+{
+  "page": "page-24",
+  "site": "演示订阅（虚构）",
+  "url": "https://fixture.local/page-24.html",
+  "positives": [
+    {
+      "rule_id": "dp-anchored-discount",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "原价 ¥89，券后 ¥59",
+      "note": "并列原价与券后价，周边无来源"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-prechecked-optin",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>input:nth(0)",
+      "snippet_expected": "同意服务条款",
+      "note": "加载即勾选，但标签与订阅/会员/保价无关"
+    }
+  ]
+}

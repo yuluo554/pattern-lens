@@ -1,0 +1,14 @@
+{
+  "page": "page-12",
+  "site": "样例电器（虚构）",
+  "url": "https://fixture.local/page-12.html",
+  "positives": [
+    {
+      "rule_id": "dp-countdown-pressure",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "限时 199 元",
+      "note": "限时施压文本"
+    }
+  ],
+  "negatives": []
+}

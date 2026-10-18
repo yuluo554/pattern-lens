@@ -1,0 +1,20 @@
+{
+  "page": "page-06",
+  "site": "示例商城（虚构）",
+  "url": "https://fixture.local/page-06.html",
+  "positives": [
+    {
+      "rule_id": "dp-hidden-close",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>button:nth(0)",
+      "snippet_expected": "跳过",
+      "note": "跳过控件可点击尺寸 8x8（极小）"
+    },
+    {
+      "rule_id": "dp-dark-close",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>button:nth(0)",
+      "snippet_expected": "取消",
+      "note": "取消控件对比度低于阈值"
+    }
+  ],
+  "negatives": []
+}

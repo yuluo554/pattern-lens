@@ -1,0 +1,14 @@
+{
+  "page": "page-28",
+  "site": "演示票务（虚构）",
+  "url": "https://fixture.local/page-28.html",
+  "positives": [
+    {
+      "rule_id": "dp-default-addon",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>input:nth(0)",
+      "snippet_expected": "附加服务包",
+      "note": "附加项加载即勾选（附加/服务包）"
+    }
+  ],
+  "negatives": []
+}

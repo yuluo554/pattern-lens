@@ -1,0 +1,14 @@
+{
+  "page": "page-34",
+  "site": "演示订阅（虚构）",
+  "url": "https://fixture.local/page-34.html",
+  "positives": [
+    {
+      "rule_id": "dp-subscription-trap",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "退订请拨打客服热线 19900000000",
+      "note": "退订渠道指向客服热线，周边无在线入口"
+    }
+  ],
+  "negatives": []
+}

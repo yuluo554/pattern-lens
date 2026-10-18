@@ -19,6 +19,7 @@ export const REQUIRED_THRESHOLD_KEYS = [
   "scan_timeout_ms",
   "first_result_budget_ms",
   "fixture_page_count",
+  "stress_node_count",
   "snippet_max_len",
 ];
 

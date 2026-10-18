@@ -1,0 +1,21 @@
+{
+  "page": "page-10",
+  "site": "样例会员（虚构）",
+  "url": "https://fixture.local/page-10.html",
+  "positives": [
+    {
+      "rule_id": "dp-countdown-pressure",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "倒计时 10 分钟",
+      "note": "倒计时提示文本"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-dark-close",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>button:nth(0)",
+      "snippet_expected": "取消",
+      "note": "对比度与透明度都在正常范围"
+    }
+  ]
+}

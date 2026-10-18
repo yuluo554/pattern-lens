@@ -1,0 +1,21 @@
+{
+  "page": "page-33",
+  "site": "演示票务（虚构）",
+  "url": "https://example.invalid/page-33.html",
+  "positives": [
+    {
+      "rule_id": "dp-subscription-trap",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "如需取消订阅，请致电客服热线",
+      "note": "取消渠道指向电话/客服，周边无在线入口"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-countdown-pressure",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "距活动开始 02:45",
+      "note": "同为倒计时形态，但文本声明「距活动开始」（中和项）"
+    }
+  ]
+}

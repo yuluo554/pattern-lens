@@ -1,0 +1,14 @@
+{
+  "page": "page-37",
+  "site": "样例电器（虚构）",
+  "url": "https://example.invalid/page-37.html",
+  "positives": [
+    {
+      "rule_id": "dp-hidden-fee",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "服务费 ¥12 将在结算页计入",
+      "note": "附加费用在结算阶段出现"
+    }
+  ],
+  "negatives": []
+}

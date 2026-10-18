@@ -1,0 +1,27 @@
+{
+  "page": "page-04",
+  "site": "演示订阅（虚构）",
+  "url": "https://fixture.local/page-04.html",
+  "positives": [
+    {
+      "rule_id": "dp-prechecked-optin",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(0)>div:nth(0)>input:nth(0)",
+      "snippet_expected": "推荐服务加购",
+      "note": "加载即勾选；标签指向推荐服务"
+    },
+    {
+      "rule_id": "dp-forced-signup",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(1)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "注册即可购买",
+      "note": "把购买与注册绑定"
+    }
+  ],
+  "negatives": [
+    {
+      "rule_id": "dp-forced-signup",
+      "selector_path": "html:nth(0)>body:nth(0)>main:nth(0)>section:nth(2)>div:nth(0)>p:nth(0)",
+      "snippet_expected": "登录查看订单历史",
+      "note": "登录用于查看自己的订单，不构成强制注册"
+    }
+  ]
+}
