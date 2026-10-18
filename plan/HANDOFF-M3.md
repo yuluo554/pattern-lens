@@ -19,19 +19,22 @@
 | 探活（可证伪） | `tests/rules-bench.test.mjs` | **3 组全红**：引擎侧中和项短路 → precision 边；数据侧删 `nearby_absent_any` → 误报边；数据侧加不可满足 `text_all` → recall 边。每组变红后还原并**断言字节已还原** |
 | 建模缺口反事实 | `tests/rules-bench.test.mjs` | 常驻 2 项：恢复缺口形态 → 误报 **85** 条（基线 0，断言 ≥ 60）+ 四条文本级规则 precision 掉到 **0.1379~0.1667**（断言 < 门槛）——证明 D29 是载荷的 |
 | 阈值单点 | `tests/threshold-token.test.mjs` | 剥注释扫 `src/**` + `rules/dp-*.json` **零命中**；阳性/阴性对照齐备；豁免清单打印（豁免 3、40） |
+| 采集侧 ↔ 基准侧同语义 | `tests/collector-parity.test.mjs` | 假 DOM 逐节点比对 40 页（`path/kind/text/label/nearText/attrs/style/contrast/box`）**全等**；**一上就抓出 2 个真实缺陷**（见下）；同语义自证（注入差异必报）+ 只读纪律（比对后宿主未变） |
 | 注入链路 | `tests/injection-chain.test.mjs` | 假 chrome 离线跑通；黑名单 → `executeScript` **一次都没调用**；注入失败显式报错 |
-| 单元与门测试 | `npm test` | **146 项全通过**（0 fail），**17** 个测试文件（逐文件登记在 `package.json`，由 `tests/test-manifest.test.mjs` 守门） |
-| 全量自检 | `npm run verify` | **16 段 PASS / 3 段 not_enabled**，rc=0（`rules.bench` 由未启用段转为**实跑 gate**；新增 `threshold.token` / `injection.chain`） |
-| 构建 | `npm run build` + `build:check` | `dist/` 16 文件 / 128,521 字节；`release/pattern-lens-0.1.0.zip` 130,387 字节；重生成逐字节一致 |
+| 单元与门测试 | `npm test` | **150 项全通过**（0 fail），**18** 个测试文件（逐文件登记在 `package.json`，由 `tests/test-manifest.test.mjs` 守门） |
+| 全量自检 | `npm run verify` | **17 段 PASS / 3 段 not_enabled**，rc=0（共 20 段；`rules.bench` 由未启用段转为**实跑 gate**；新增 `threshold.token` / `collector.parity` / `injection.chain`） |
+| 构建 | `npm run build` + `npm run build:check` | `dist/` 16 个文件 / 130,172 字节；`release/pattern-lens-0.1.0.zip` 132,038 字节；重生成逐字节一致 |
 | 规则包 | `npm run rules:hash -- --check` | `ruleset_hash` **不变**（`b81d12e8…`；M2 未改规则数据与阈值） |
 | fixture | `npm run fixtures:check` | 124 文件位级一致（`data/fixtures/README.md` 因口径补写而重生成，**页面与真值零变化**） |
 | CI | **未接远端 → 从未跑过** | 本地等价校验 = CI 工作流静态自查 + 逐步骤手工复跑；**CI 待首推验证** |
 
-**M2 顺手改严/改动的三处（都要知道）**：
+**M2 顺手改严/改动的五处（都要知道）**：
 
 1. **D29 建模缺口处置**：`label` 的自身文本回退**只对控件**生效（普通元素只取显式标签属性）。口径单点在 `src/lib/page-model.js` 的 `labelFrom()`；采集器、基准侧（`tools/fixture-page-model.mjs`）、生成器三处同调。
 2. **D30 同一 locator 去重**：引擎按 `(rule_id, locator)` 去重（先到先得），被丢的候选记 `rejected[].reason = "duplicate_locator"`。**新增了一个 reject reason 取值**（`plan/04` M2 判定语义已补记）。
-3. **D31 周边文本性能**：`limitNearText()` 改"按需翻倍前缀"归一（语义与通篇归一等价）；压力页冷启动 1313ms → 106.5ms。**`NEAR_TEXT_LIMIT`（200）从采集器搬到了 `src/lib/page-model.js`**（三处同调；仍是 < 100 豁免之外的小整数类常数，不受 token 门禁约束）。
+3. **D31 周边文本性能**：`limitNearText()` 改"按需翻倍前缀"归一（语义与通篇归一等价）；压力页冷启动 1313ms → 106.5ms。**`NEAR_TEXT_LIMIT`（200）从采集器搬到了 `src/lib/page-model.js`**（三处同调）。
+4. **采集器缺陷①（parity 门抓出）**：采集器原用原生 `textContent`，会把 `<style>` 块里的 **CSS 文本**算进 `nearby-text`（`body` 的周边文本含整段样式表）→ 改为**跳过 SKIP_TAGS 子树**的 `textContentSkipping()`。**基准侧全绿也照不出这个缺陷**（基准侧走的是自己那套解析）。
+5. **采集器缺陷②（parity 门抓出）**：采集器把 `contrast` 塞进了 `style` 对象，而证据登记表读的是 **`node.contrast`** → `contrast-ratio` 永远取不到，**`dp-dark-close` 在真实浏览器里永不产出**（基准侧因为直接构造节点而全绿）。改为 `styleOf()` 返回 `{style, contrast}`，顶层字段赋值。
 
 ## 2. 下一棒待办（M3：页内取证高亮层）
 
@@ -82,7 +85,7 @@
 | K25 | **压力页规模只在 manifest**：`thresholds.stress_node_count`；生成器与测试都读它 | `rules/manifest.json` | `tests/fixtures-frozen.test.mjs` + 基准 B7 |
 | **K26** | **同一 `(rule_id, locator)` 只出一条 finding**（先到先得 = 文档序在前者胜）；被丢的候选记 `rejected[].reason = "duplicate_locator"`（**不静默**） | `src/lib/engine.js` | `tests/rules-bench.test.mjs`（B5 + 专门用例） |
 | **K27** | **`label` 的自身文本回退只对控件生效**（普通元素只取 `aria-label`/`title`/`placeholder`/`alt`）；口径单点 `labelFrom()` | `src/lib/page-model.js` | `tests/rules-bench.test.mjs`（反事实对照：恢复缺口 → 误报 > 10 条） |
-| **K28** | **基准段 B1–B7 一律读 `rules/manifest.json` 的门槛**，缺件即 **FAIL**（不是 SKIP）；报告必须双登记 + 声明"合成基准，非穷举真实站点"；无负样本记 `not_assessed`（不填 1.0） | `tools/bench-rules.mjs` | `tests/rules-bench.test.mjs`（17 项）+ `verify` 的 `rules.bench` 段 |
+| **K28** | **基准段 B1–B7 一律读 `rules/manifest.json` 的门槛**，缺件即 **FAIL**（不是 SKIP）；报告必须双登记 + 声明"合成基准，非穷举真实站点"；无负样本记 `not_assessed`（不填 1.0） | `tools/bench-rules.mjs` | `tests/rules-bench.test.mjs`（17 项）+ `tests/collector-parity.test.mjs`+ `verify` 的 `rules.bench` 段 |
 
 ## 4. 本机环境坑（只写实测过的）
 
@@ -95,8 +98,8 @@
   验收中文文件走 `node -e` 读回或解析器回读。
 - **未接远端**：`git remote -v` 为空 → **一次 CI 都没跑过**；`plan/06` 里的 CI 项一律写"待首推验证"。
 - **`fixtures:check` 是重量级门**（要重新生成 124 个文件，约 3.2s）；它已进 `verify`，别在循环里反复调。
-- **`npm test` 现在约 6s**（M2 新增 `tests/rules-bench.test.mjs`：3 组探活要在临时目录里复制整棵仓库，约 5s）；
-  跑单文件更快：`node --test tests/rules-bench.test.mjs`。
+- **`npm test` 现在约 9s**（M2 新增 `tests/rules-bench.test.mjs`：3 组探活要在临时目录里复制整棵仓库，约 5s）；
+  跑单文件更快：`node --test tests/rules-bench.test.mjs`（或 `tests/collector-parity.test.mjs`，约 50ms）。
 - **`tools/bench-rules.mjs` 的 B7 是墙钟测量**：本机 106~137ms 有波动，但离 500ms 预算余量充足；
   它**只测量、不进任何产物**（产物里的 `elapsed_ms` 由调用方注入，基准里固定为 0 → 双跑字节一致）。
 - **本机自动化拉浏览器不稳**（有实测史）→ M3 的浏览器冒烟缺浏览器时**显式 SKIP**，不得据此打 ✅。
@@ -121,7 +124,7 @@
 
 ```bash
 node tools/check-sprint-layout.mjs     # 布局门（任何新对话的第一动作）
-npm test                               # 全部测试（零依赖，不需要 npm install；17 个文件，约 6s）
+npm test                               # 全部测试（零依赖，不需要 npm install；18 个文件，约 9s）
 npm run verify                         # 分段全量自检；未启用段显式列出
 npm run verify -- --strict             # 未启用段 → 以退码 1 收尾（M6 用）
 npm run bench                          # 规则基准 B1–B7（逐样本点名报告；rc=0 全达标）

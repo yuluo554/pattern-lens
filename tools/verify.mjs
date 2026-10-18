@@ -27,6 +27,7 @@ const SEGMENTS = [
   { name: "build", kind: "tests", files: ["tests/build.test.mjs"], note: "扩展树白名单 + zip 确定性" },
   { name: "fixtures.frozen", kind: "tests", files: ["tests/truth-shape.test.mjs", "tests/fixtures-frozen.test.mjs"], note: "40 页 fixture 与真值（冻结形态 + 独立复算）" },
   { name: "fixtures.check", kind: "gate", script: "tools/gen-fixtures.mjs", args: ["--check"], note: "fixture 再生成位级一致" },
+  { name: "collector.parity", kind: "tests", files: ["tests/collector-parity.test.mjs"], note: "采集侧 ↔ 基准侧同语义（假 DOM 逐节点比对）" },
   { name: "injection.chain", kind: "tests", files: ["tests/injection-chain.test.mjs"], note: "按需注入链路（站点开关 → executeScript → session 回传）" },
   { name: "rules.bench", kind: "gate", script: "tools/bench-rules.mjs", args: ["--quiet"], note: "B1–B7 规则基准（逐规则 precision/recall 双边门）" },
   { name: "overlay.diff", kind: "not_enabled", milestone: "M3", note: "清除覆盖层后 DOM diff = 0" },

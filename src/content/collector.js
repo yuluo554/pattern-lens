@@ -76,15 +76,24 @@ function effectiveBackground(element, view) {
   return "rgb(255, 255, 255)";
 }
 
+/**
+ * 声明样式子集（与基准侧的 `style-map.json` 同形状）**+ 对比度**。
+ * ⚠ `contrast` 是**节点顶层字段**（`node.contrast`），不是 `node.style.contrast`——
+ * 证据登记表（`src/lib/page-model.js` 的 `EVIDENCE["contrast-ratio"]`）读的是 `node.contrast`。
+ * 放进 `style` 里会让 `contrast-ratio` 永远取不到 → `dp-dark-close` 永不产出（实测踩过：两侧语义漂移，
+ * 由 `tests/collector-parity.test.mjs` 抓出）。
+ */
 function styleOf(element, view) {
   const computed = view.getComputedStyle(element);
   const background = effectiveBackground(element, view);
   return {
-    display: computed.display,
-    color: computed.color,
-    backgroundColor: background,
-    opacity: Number.parseFloat(computed.opacity ?? "1"),
-    fontSizePx: Number.parseFloat(computed.fontSize ?? "0"),
+    style: {
+      display: computed.display,
+      color: computed.color,
+      backgroundColor: background,
+      opacity: Number.parseFloat(computed.opacity ?? "1"),
+      fontSizePx: Number.parseFloat(computed.fontSize ?? "0"),
+    },
     contrast: contrastRatio(computed.color, background) ?? undefined,
   };
 }
@@ -95,14 +104,34 @@ function boxOf(element) {
   return { widthPx: Math.round(rect.width), heightPx: Math.round(rect.height) };
 }
 
+/**
+ * 元素文本内容：**跳过 SKIP_TAGS 子树**（`script`/`style`/`noscript`/…）。
+ *
+ * ⚠ 为什么不直接用 `element.textContent`：它会连 `<style>` 块里的 CSS 与 `<script>` 里的代码一起算进去。
+ * 这会让 `nearby-text`（= 父容器文本 − 自身文本）被 CSS 文本污染——例如 `body` 的周边文本会包含整段样式表，
+ * 使 `nearby_absent_any`（"周边没有可核对来源"）这类判据在**每个**元素上都可能被无关文本干扰。
+ * 口径单点：与 `tools/fixture-page-model.mjs` / `tools/gen-fixtures.mjs` 的 `textContentOf` **同语义**，
+ * 由 `tests/collector-parity.test.mjs` 逐节点断言两侧一致（K24）。
+ */
+function textContentSkipping(element) {
+  let out = "";
+  for (const child of element.childNodes ?? []) {
+    if (child.nodeType === 3) out += child.nodeValue ?? "";
+    else if (child.nodeType === 1 && !SKIP_TAGS.has(String(child.tagName || "").toLowerCase())) {
+      out += textContentSkipping(child);
+    }
+  }
+  return out;
+}
+
 function labelOf(element) {
-  return labelFrom({ tag: element.tagName, attrs: attrsOf(element), ownText: element.textContent ?? "" });
+  return labelFrom({ tag: element.tagName, attrs: attrsOf(element), ownText: textContentSkipping(element) });
 }
 
 function nearTextOf(element) {
   const parent = element.parentElement;
   if (!parent) return "";
-  return limitNearText(element.textContent ?? "", parent.textContent ?? "");
+  return limitNearText(textContentSkipping(element), textContentSkipping(parent));
 }
 
 /**
@@ -159,6 +188,7 @@ export function collectPageModel(root = document, options = {}) {
     if (SKIP_TAGS.has(tag)) return;
 
     const path = pathOf(element, root);
+    const declared = styleOf(element, view);
     push(
       makeElementNode({
         seq,
@@ -167,7 +197,8 @@ export function collectPageModel(root = document, options = {}) {
         attrs: attrsOf(element),
         label: labelOf(element),
         nearText: nearTextOf(element),
-        style: styleOf(element, view),
+        style: declared.style,
+        contrast: declared.contrast,
         box: boxOf(element),
       }),
     );
