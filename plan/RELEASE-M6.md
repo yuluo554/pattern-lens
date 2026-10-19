@@ -32,6 +32,8 @@
 | `npm run fixtures:check` | 再生成 124 个文件 == 冻结产物 124 个文件（位级一致） |
 | `npm run bench` | B1–B7 全达标；压力页 5007 节点冷 130.3ms / 热 135.5ms（< 500ms 预算） |
 | `node tools/check-release.mjs --pre-tag` | 见 §1.4；tag / 远端项报 SKIP，离线项全绿（`WORKTREE_CLEAN` 在提交后转 PASS） |
+| 干净环境验证（`plan/07` §3.1 第 4 条） | `git clone --no-local . /d/tmp/pl-clean-clone` → **无 `node_modules`** → `npm test` **255 项** / `npm run verify` **24 段** / `npm run build` + `--check` 逐字节一致；**干净 clone 与主仓的 zip `cmp` 逐字节一致**；干净 clone 里 `check-release.mjs --pre-tag` = PASS 16 / FAIL 0 / SKIP 8（rc=0） |
+| CI 工作流静态自查 | `.github/workflows/ci.yml`：**1 个 job**（`verify`）× **4 矩阵**（ubuntu/windows × node 22/24）× **9 步**；step `name` 无裸 `: `；`on:` 含 `push` / `pull_request` / `workflow_dispatch` |
 | GitHub Actions（首推 `main`） | **待首推验证**（本仓库此前未接远端 → 一次 CI 都没跑过；见 §1.6） |
 
 ### 1.3 交付产物与附件口径
@@ -81,7 +83,7 @@ git archive --format=tar --prefix=pattern-lens/ v0.1.0 | gzip -9n > /tmp/tagtree
 | 项 | 状态 | 说明 |
 | --- | --- | --- |
 | CI 实跑 | ⬜ 未做 | **首推前一次 CI 都没跑过**；§一 不预填 run id，§二 首推后据实回填（`plan/06` §六 第 3 条：未达成写"偏差说明"，不把 ⬜ 改 ✅） |
-| 干净环境验证 | ⬜ 待执行 | `git clone --no-local` → 不装包 → `npm test` + `npm run verify` + `npm run build`（`plan/07` §3.1 第 4 条）；§二 记实测 |
+| 干净环境验证 | ✅ 已做 | `git clone --no-local` → 不装包 → `npm test` + `npm run verify` + `npm run build` 逐条跑通（见 §1.2 末两行）；zip 与主仓逐字节一致 |
 | 浏览器冒烟覆盖 | 🟡 只覆盖 `page-01` | `smoke:overlay` / `smoke:export` 真实浏览器全绿，但只冒烟一页；且不进 CI（CI 无浏览器，D35） |
 | 商店提交 | ⬜ 不在首期 | 只准备素材不提交（Q5 默认①） |
 | `storage.session` 浏览器重启后语义 | ⬜ 未验 | 平台语义，非本项目可改（同 M4/M5 登记） |
