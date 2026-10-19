@@ -36,6 +36,7 @@ const SEGMENTS = [
   { name: "site.settings", kind: "tests", files: ["tests/site-settings.test.mjs"], note: "站点黑白名单（不注入 + UI 明示）与规则开关（禁用不进扫描/不进导出）" },
   { name: "export.zero_network", kind: "tests", files: ["tests/zero-network.test.mjs"], note: "整轮扫描 + 导出 0 网络请求（运行面源码断言 + 离线动态探针）" },
   { name: "store.assets", kind: "tests", files: ["tests/store-assets.test.mjs"], note: "商店素材清单 ↔ 实物对账 + 隐私声明 ↔ 权限白名单一致" },
+  { name: "release.gate", kind: "tests", files: ["tests/release-gate.test.mjs"], note: "发布终态自检门（M6）的运行时形态：三模、SKIP≠PASS、缺档可构造（**不测当前 0 FAIL**）" },
 ];
 
 function run(command, args) {

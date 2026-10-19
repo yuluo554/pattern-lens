@@ -95,8 +95,10 @@ npm run layout         # 布局门：项目是否仍长在方法论上（AGENTS.
 npm test               # 全部测试（node --test，零依赖，不需要 npm install）
 npm run verify         # 一条命令全量自检（rc=0 全绿；未启用段以 not_enabled 显式列出）
 npm run verify:strict  # 未启用段必须清零（M6 用）
-npm run build          # → dist/（可 Load unpacked 的扩展树）+ 确定性 zip
+npm run build          # → dist/（可 Load unpacked 的扩展树）+ 确定性 zip + SHA256SUMS
 npm run build:check    # 重生成逐字节一致自检
+node tools/check-release.mjs           # 发布终态自检（离线；tag/远端项报 SKIP，不冒充通过）
+node tools/check-release.mjs --online  # 终态（需远端：仓库公开 / tag 两端一致 / CI run 对账 / 附件 sha256）
 npm run rules:hash     # 重算规则包内容哈希，写回 rules/manifest.json
 npm run fixtures       # 生成 40 页合成 fixture + 逐页真值 + 覆盖矩阵（data/fixtures/）
 npm run fixtures:check # 再生成位级比对（冻结产物与重生成结果逐字节一致）

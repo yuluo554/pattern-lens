@@ -6,6 +6,7 @@
 // 用法：node tools/build-extension.mjs [--check]
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -135,6 +136,12 @@ export function zipName() {
   return `pattern-lens-${extensionVersion()}.zip`;
 }
 
+/** `release/SHA256SUMS`：附件 sha256 的本地留档件（发布门 `sha256sum -c` 用；**不入仓**）。
+ * 形态取 GNU coreutils 的二进制读取形态（`<hex>  *<name>`）——`sha256sum -c` 认它。 */
+export function renderSums(zip) {
+  return `${createHash("sha256").update(zip).digest("hex")}  *${zipName()}\n`;
+}
+
 /** 产出 dist 的完整文件集合（路径 → 内容 Buffer）。 */
 export function renderDist() {
   const files = new Map();
@@ -217,20 +224,23 @@ function main() {
     writeTree(DIST_DIR, files);
     mkdirSync(RELEASE_DIR, { recursive: true });
     writeFileSync(join(RELEASE_DIR, zipName()), zip);
-    process.stdout.write(`已产出 dist/（${files.size} 个文件）与 release/${zipName()}（${zip.length} 字节）\n`);
+    writeFileSync(join(RELEASE_DIR, "SHA256SUMS"), renderSums(zip));
+    process.stdout.write(`已产出 dist/（${files.size} 个文件）与 release/${zipName()}（${zip.length} 字节）+ SHA256SUMS\n`);
     return;
   }
 
   const zipPath = join(RELEASE_DIR, zipName());
   const diskZip = existsSync(zipPath) ? new Map([[zipName(), readFileSync(zipPath)]]) : new Map();
+  const diskSums = existsSync(join(RELEASE_DIR, "SHA256SUMS")) ? new Map([["SHA256SUMS", readFileSync(join(RELEASE_DIR, "SHA256SUMS"))]]) : new Map();
   const okTree = compare("dist/", files, readTree(DIST_DIR));
   const okZip = compare("zip", new Map([[zipName(), zip]]), diskZip);
-  if (!okTree || !okZip) {
+  const okSums = compare("SHA256SUMS", new Map([["SHA256SUMS", Buffer.from(renderSums(zip), "utf8")]]), diskSums);
+  if (!okTree || !okZip || !okSums) {
     process.stdout.write("结论：产物与重生成结果不一致（跑 npm run build 重新生成）\n");
     process.exitCode = 1;
     return;
   }
-  process.stdout.write("结论：dist/ 与 zip 均可由源码逐字节重生成（确定性成立）\n");
+  process.stdout.write("结论：dist/ 与 zip 与 SHA256SUMS 均可由源码逐字节重生成（确定性成立）\n");
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
