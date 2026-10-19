@@ -119,8 +119,10 @@ cmp release/pattern-lens-0.1.0.zip /d/tmp/tagtree/release/pattern-lens-0.1.0.zip
 ```
 
 > 建仓、push、tag、Release 都是**对外动作**，须**用户明确确认后**执行。
-> **本机环境坑**：`github.com:443` 可能间歇不通（`api.github.com` 正常）；推码失败先重试 3~4 次，
-> 或用 `git -c http.curloptResolve=github.com:443:<ip>`；**推送成功的判据 = 远端 sha == 本地 sha**。
+> **本机环境坑（本轮实测）**：`api.github.com` 与 `ssh.github.com:443` 可达，但 **`github.com:443` 被网络阻断**
+> （`git push` 报 `Failed to connect to github.com port 443`，`curloptResolve` 也不通）。正解 = **SSH-over-443**：
+> `git push ssh://git@ssh.github.com:443/yuluo554/pattern-lens.git main`（本轮三次 push 均经此通道成功）。
+> **推送成功的判据 = 远端 sha == 本地 sha**，不是 push 的退出码。
 
 ## 二、tag 后追加
 
@@ -151,26 +153,28 @@ cmp release/pattern-lens-0.1.0.zip /d/tmp/tagtree/release/pattern-lens-0.1.0.zip
 ### 2.3 `check-release.mjs --online` 终态
 
 ```text
-PASS 24 / FAIL 0 / SKIP 0   （rc=0；tag 时点基线，本留档已在树里）
+PASS 25 / FAIL 0 / SKIP 0   （rc=0；tag 时点基线，本留档已在树里）
 ```
 
 | 项 | 值 |
 | --- | --- |
-| 汇总 | **PASS 24 / FAIL 0 / SKIP 0**，rc=0 |
+| 汇总 | **PASS 25 / FAIL 0 / SKIP 0**，rc=0 |
 | `REPO_PUBLIC` | PASS（`https://github.com/yuluo554/pattern-lens` PUBLIC） |
 | `REMOTE_TAG` | PASS（两端一致 `852a4c43af16`） |
-| `CI_RUNS` | PASS（2 条 push run；发布提交 branch run `#39200133922` 与 tag run `#39200309016` 均 success） |
+| `CI_RUNS` | PASS（3 条 push run；发布提交 branch run `#39200133922` 与 tag run `#39200309016` 均 success） |
 | `REMOTE_RELEASE` | PASS（`v0.1.0` draft=false assets=`pattern-lens-0.1.0.zip`） |
 | `RELEASE_NOTES_SHA` / `RELEASE_ASSET_SHA` | PASS（正文含 sha256；远端附件 digest 与本地一致） |
+| `POST_TAG_SCOPE` / `DELIVERABLE_UNCHANGED` | PASS（7 项 tag 后改动全在非交付面；交付面零差异） |
 
 > 至此 **M6 三件套（tag / Release / 留档）全部落地**，离线门与在线门均无 FAIL。
-> **门自变留痕**：本栏的 `PASS 24` 是**留档已入库之后**测的（§三 覆盖对账表让检查项从 23 增到 24）；
-> §一 的 tag 前数字与这里的差异，是"留档进了判据面"这件事造成的，不是门变了（skill "门自变"条）。
+> **门自变留痕**：本栏的 `PASS 25` 是**留档已入库 + 收尾提交之后**测的（§三 覆盖对账表与收尾提交让检查项从 23 增到 25）；
+> §一 的 tag 前数字与这里的差异，是"留档进了判据面 / 收尾提交进了树"这件事造成的，不是门变了（skill "门自变"条）。
 
 ### 2.4 首推后回写
 
-- [x] CI 首推：`main` branch run `#39200133922`（4 矩阵全 success）与 `v0.1.0` tag run `#39200309016`（4 矩阵全 success）
-      两条均绿；**push 数 = run 数对账**（2 次 push ↔ 2 条 push run，按 `event/headBranch/headSha/conclusion` 逐条配对）。
+- [x] CI 首推：`main` branch run `#39200133922`（4 矩阵全 success）、`v0.1.0` tag run `#39200309016`（4 矩阵全 success）、
+      收尾回写 branch run `#39202428486`（4 矩阵全 success）；**push 数 = run 数对账**（3 次 push ↔ 3 条 push run，
+      按 `event/headBranch/headSha/conclusion` 逐条配对）。
 - [x] 干净 clone 复核：`git clone --no-local . /d/tmp/pl-clean-clone` → **无 `node_modules`** → `npm test`（255 项）+
       `npm run verify`（24 段）+ `npm run build` 逐条跑通；干净 clone 与主仓 zip `cmp` 逐字节一致。
 - [x] 真下载复核：`gh release download v0.1.0 -D /d/tmp/rel-verify` → sha256 与 `release/SHA256SUMS` 一致；
