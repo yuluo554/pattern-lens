@@ -31,12 +31,12 @@
 | `plan/HANDOFF-M3.md` | **启动第 3 棒时读的交接单**（M2 收尾时写） | ✅ M2 收尾 |
 | `plan/HANDOFF-M4.md` | **启动第 4 棒时读的交接单**（M3 收尾时写） | ✅ M3 收尾 |
 | `plan/RELEASE-M6.md` | 发布留档（tag 前事实 / tag 后追加，两栏） | ⬜ 待 M6 |
-| `manifest.json` + `src/` | MV3 清单与扩展源码（引擎/采集器/注入链路已接入） | 🟡 骨架 M0，引擎链路 M2，页内取证层 M3，侧边栏取证台 M4（导出 UI 待 M5） |
+| `manifest.json` + `src/` | MV3 清单与扩展源码（引擎/采集器/注入链路已接入） | 🟡 骨架 M0，引擎链路 M2，页内取证层 M3，侧边栏取证台 M4，导出与设置 M5 |
 | `rules/manifest.json` + `rules/dp-*.json` | 规则包版本/阈值（唯一数值真相源）+ 首批 12 条规则 | ✅ 数据 M0 / 引擎接入 M2 |
 | `data/fixtures/` | 40 页合成 fixture + 逐页真值（`page-NN/truth.json`）+ 覆盖矩阵（`COVERAGE.md`）+ 压力页 | ✅ M1 |
 | `tools/bench-rules.mjs` + `tools/fixture-page-model.mjs` | 规则基准 runner（B1–B7）与 Node 侧页面模型解析器（独立于生成器） | ✅ M2 |
-| `docs/商店素材清单.md` + `assets/store/` | 商店素材清单与实物 | ⬜ 待 M5 |
-| `docs/隐私声明.md` | 隐私声明文本 | ⬜ 待 M5 |
+| `docs/商店素材清单.md` + `assets/store/` | 商店素材清单与实物 | ✅ M5（清单 ↔ 实物双向对账，`tests/store-assets.test.mjs`） |
+| `docs/隐私声明.md` | 隐私声明文本 | ✅ M5（与权限白名单逐项一致，`tests/store-assets.test.mjs`） |
 | `README.md` | 用户侧门面 | 🟡 骨架（M0），M5 定稿 |
 
 ---
@@ -111,6 +111,15 @@
 | D37 | **站点级折叠用第二个 session 键 `ScanHistory`**（`LastScan` 仍保留最新一次）；历史**扫描时间倒序**、按 `(url, scanned_at)` 去重、上限 20 | ①只存内存（关掉 sidepanel 即丢）；②不实现折叠（M4 只做 4 项 DoD，里程碑行措辞收敛） | 里程碑行（三处状态副本）写的是「四组分组 + `storage.session` 恢复 + **站点级折叠**」，而 M4 DoD 只列 4 项（不含折叠）。**弃②**：会让状态表里的承诺在 M4 ✅ 时仍无实现（"写了却没做"）；**弃①**：折叠要求"关掉侧边栏再开，多次扫描仍按时间倒序折叠"，纯内存做不到。故新增 `ScanHistory`（SW 落盘、sidepanel 只读，**不各存一份**）；`HISTORY_MAX = 20` 是小整数常数（K1 豁免面内，不进 manifest） |
 | D38 | **侧边栏纯逻辑单列 `src/lib/sidepanel-view.js`，`sidepanel.js` 只做 DOM 接线并支持依赖注入**（`initSidepanel({doc, runtime})`） | ①纯逻辑留在 `sidepanel.js`（靠全局 `document`/`chrome`）；②只做纯函数、不验 DOM 侧 | 分组/折叠/恢复/空态文案这些判据**必须能离线验收**——但 `sidepanel.js` 依赖宿主 `document`，写在一起就只能"跑扩展"才能验。**弃①**：等于把 M4 DoD 的 4 项判据全押在"有没有浏览器"上（与 D15 的分层口径相悖）；**弃②**：DOM 侧接线（`<details open>` 只展开最新、恢复落到文案）同样是 DoD 判据，不验就只是"函数对了"。故纯逻辑进 `src/lib/**`（K10：不碰扩展 API / DOM / 时钟），DOM 侧靠假 DOM + 假 chrome 运行时验收（同 injection-chain / overlay 的做法） |
 
+### 2.7 M5 导出与设置期决策（2026-10-19）
+
+| # | 决策 | 备选方案 | 结论与弃选理由 |
+|---|---|---|---|
+| D39 | **导出产物单点 = `src/lib/export.js` 的 `exportArtifact(scan, manifest, format)`**（返回 `{format, filename, mime, text}`；`sidepanel.js` 只做 `Blob` + `<a download>`，**不自己拼文本/MIME/扩展名**） | ①UI 里直接调 `toMarkdown` / `toJsonText` 并自己拼 MIME；②UI 侧自留一份字段顺序 | M5 DoD 第 1/2 项要求"导出字段完整 + 双跑字节一致"，而这两条要在**UI 导出路径**上复核——但 `sidepanel.js` 依赖宿主 `document`，写在一起就只能"跑扩展"才验（同 D38 的分层理由）。**弃①**：`text/markdown`、`application/json`、扩展名会在 UI 里成为第二份真相（改格式要改两处）；**弃②**：字段顺序已是 K7 契约（单点 `export.js`），UI 再排一次即漂移。故"取哪份文本 / 叫什么名 / 什么 MIME"抽成纯函数 → 离线可对**同一条路径**逐字节断言，真实浏览器侧由 `npm run smoke:export` 捕获 UI 交出去的 `Blob` 与离线产物比对 |
+| D40 | **浏览器自动化底座单点 = `tools/cdp.mjs`**（浏览器发现 / 就绪等待 / CDP 客户端 / `evaluate` / `launch` / SKIP 口径）；`smoke-overlay.mjs`（M3）与 `smoke-export.mjs`（M5）复用 | 各自抄一份 CDP 客户端 | 两个冒烟脚本都要"拉起本机浏览器 → CDP 驱动 → 真实点击/真实渲染"。**弃"各抄一份"**：抄第二份会让"怎么拉浏览器、怎么判就绪、怎么发真实点击"在两处各自漂移（K 口径纪律：同一判据只许一处实现）。故收敛到 `cdp.mjs`；两脚本只写各自**要验的事**（M3 验页内覆盖层，M5 验导出与网络计数） |
+| D41 | **商店素材（图标 / 截图）一律生成、禁手编**：图标由 `tools/gen-store-icons.mjs` 用**自写最小 PNG 编码器**（`node:zlib` deflate + 自算 CRC32）确定性产出（`--check` 逐字节比对）；截图由 `tools/smoke-export.mjs --shots` 在真实浏览器里渲染产出 | ①手工放位图素材；②引入图像库生成 | 仓库纪律是"产物一律生成、禁手编"（同 K23）。**弃①**：位图手编不可复现、改一处不知道改哪；**弃②**：会引入第三方依赖，与"零依赖"承诺冲突。故图标走自写编码器（无依赖、逐字节确定、可 `--check`）；截图是真实渲染产物，**不做逐字节断言**（浏览器渲染逐次有像素级差异），只断言存在与尺寸 |
+| D42 | **浏览器临时 profile 落点改到仓库内 `tmp/`（已在 `.gitignore`），不用系统临时目录** | 继续用 `os.tmpdir()` | **实测踩坑**：本机系统临时目录在 **C 盘**，Chrome profile 每个约 20~26MB，反复冒烟把 C 盘塞满（实测爆过一次、机器卡死）。**弃"继续用系统临时目录"**：冒烟脚本会反复跑，落点在仓库所在盘更安全，且脚本退出时清理。可用环境变量 `PL_TMP_DIR` 覆盖 |
+
 ---
 
 ## 3A. 招牌动词表（能力名词 → 交付态入口 → 断言基准）
@@ -126,8 +135,8 @@
 | 严重度（severity） | 规则包 `severity` 字段（M2 已通） | `tests/rules-schema.test.mjs`：取值属于 `rules/manifest.json` 枚举 |
 | 编号徽标高亮 | 扫描后自动注入覆盖层 / 侧边栏「在页面高亮」（M3） | `tests/overlay-dom-diff.test.mjs`：清除后页面 DOM diff = 0；**浏览器冒烟**（真实点击双向联动） | ✅ M3 |
 | 侧边栏取证台（四组分组） | 点击扩展图标打开 sidePanel（M4） | `tests/sidepanel-restore.test.mjs`：四组分组顺序/归属来自规则包；冷启动与 SW 被回收后恢复一致；站点级折叠 | ✅ M4 |
-| 一键导出证据包 | 侧边栏「导出 Markdown / JSON」（M5） | `tests/export-fields.test.mjs` + 两次导出字节一致断言 |
-| 零网络请求 | 扫描 + 导出全流程（M5） | `tests/zero-network.test.mjs` + 浏览器冒烟的 resource 计数断言 |
+| 一键导出证据包 | 侧边栏「导出 Markdown / JSON」（M5） | ✅ M5：`tests/export-fields.test.mjs`（UI 导出路径上验字段完整 + 双跑字节一致）+ `npm run smoke:export`（真实浏览器里导出的 Blob 与离线产物同源） |
+| 零网络请求 | 扫描 + 导出全流程（M5） | ✅ M5：`tests/zero-network.test.mjs`（运行面源码断言 + 离线动态探针）+ `npm run smoke:export`（CDP `Network` 域计数，远程请求 0） |
 | 零注入 | 扩展安装后未点击前（M2 已通） | `tests/injection-chain.test.mjs`：manifest 无 `content_scripts`；黑名单站点 `executeScript` **一次都没被调用** |
 
 ---
@@ -137,7 +146,7 @@
 | 承诺项 | 应存在的文件路径 | 由哪个里程碑产出 | 用哪条命令核对 |
 | --- | --- | --- | --- |
 | Manifest V3 清单 | `manifest.json` | M0（骨架）/ M2（定稿） | `git ls-files manifest.json` + `npm test -- tests/permissions-whitelist.test.mjs` |
-| 扩展源码 | `src/background/service-worker.js`、`src/content/scanner.js`、`src/content/overlay.js`、`src/sidepanel/`、`src/lib/` | M1/M3/M4 | `git ls-files src` |
+| 扩展源码 | `src/background/service-worker.js`、`src/content/scanner.js`、`src/content/overlay.js`、`src/sidepanel/`、`src/lib/` | M1/M3/M4/M5 | `git ls-files src` |
 | 目录结构说明 | `docs/目录结构说明.md` | M5 | `git ls-files docs/目录结构说明.md` |
 | 规则包 | `rules/dp-*.json` + `rules/manifest.json` | M0（数据）/ M2（引擎） | `git ls-files rules` |
 | 合成 fixture 与真值 | `data/fixtures/page-NN/{page.html,style-map.json,truth.json}` + `data/fixtures/COVERAGE.md` | M1 | `git ls-files data/fixtures` + `npm run fixtures:check` |
@@ -155,7 +164,7 @@
 
 | 承诺项 | 素材来源 | 交付物内可达性 | 核验方式 | 状态 |
 | --- | --- | --- | --- | --- |
-| 12 条规则可解释、可逐条开关 | 自建规则包 `rules/dp-*.json`（素材来源 = 公开讨论中的具体手法描述，见 `plan/01` §1.1） | 扩展内打包，随包版本化 | `tests/rules-schema.test.mjs` + 侧边栏规则开关 | ✅ 数据与引擎（M0/M2），开关待 M5 |
+| 12 条规则可解释、可逐条开关 | 自建规则包 `rules/dp-*.json`（素材来源 = 公开讨论中的具体手法描述，见 `plan/01` §1.1） | 扩展内打包，随包版本化 | `tests/rules-schema.test.mjs` + `tests/site-settings.test.mjs`（规则开关端到端：禁用规则不进扫描/不进导出） | ✅ M5（数据与引擎 M0/M2；开关 M5 端到端验收） |
 | 无证据节点不产出 finding | 规则包 `evidence_required` 字段 | 判定核心内置门禁 | `tests/engine-gate.test.mjs` + 基准 B2（8 类证据逐类断供 → 零产出 + `rejected` 非空 + 反向对照） | ✅ M2（语料侧此类候选实测 0 个，故用断供注入可证伪） |
 | 单规则 precision ≥ 0.90 / recall ≥ 0.80 | 40 页合成 fixture + 植入真值 | 基准脚本随仓 | `npm run bench` / `npm run verify`（门槛读 `rules/manifest.json`） | ✅ M2：12/12 规则达标（正 48 / 负 24 / finding 48 / 误报 0）+ 3 组探活全红 |
 | 未点击前零注入 | `activeTab` + `scripting` 按需注入 | manifest 无 `content_scripts` | `tests/injection-chain.test.mjs`（含否定性事实：黑名单站点零注入） | ✅ M2（浏览器冒烟仍未做，见 `plan/06` §五） |
@@ -163,10 +172,10 @@
 | 权限最小化 | manifest 白名单 | 交付物即 manifest | `tests/manifest-permissions.test.mjs` 逐项比对 | ✅ M2（白名单不变，M0 起常驻） |
 | 取证层清除后 DOM diff = 0 | Shadow DOM 覆盖层 | content script | `tests/overlay-dom-diff.test.mjs` + `npm run smoke:overlay`（真实浏览器三项判据） | ✅ M3（假 DOM 离线 + 真实浏览器冒烟双侧） |
 | 侧边栏冷启动 / SW 被回收后恢复 | `chrome.storage.session` | sidePanel + SW | `tests/sidepanel-restore.test.mjs` | ✅ M4（冷启动 + SW 回收后重开双侧一致；站点级折叠同段验） |
-| 导出 Markdown/JSON 字段完整且字节稳定 | Blob + `<a download>` | sidePanel 导出按钮 | `tests/export.test.mjs` + 基准 B3（40 页双跑字节一致） | 🟡 导出核心 + 双跑断言在（M0），UI 待 M5 |
-| 整轮扫描 + 导出 0 次网络请求 | 只读 DOM，无 fetch | 全链路 | `tests/zero-network.test.mjs` + 浏览器冒烟 | ⬜ 待 M5 |
-| 文案统一「可疑模式（待核对）」 | 文案单点 `src/lib/copy.js` | sidePanel + 导出 | `tests/copy-guard.test.mjs`：禁用词扫描 + 阳性对照 | ✅ M4：侧边栏空态文案走 copy 单点 + 禁用词扫描（导出侧待 M5） |
-| 隐私声明与零采集一致 | `docs/隐私声明.md` | 文档 + 代码 | 人工对账 + 权限白名单断言 | ⬜ 待 M5 |
+| 导出 Markdown/JSON 字段完整且字节稳定 | Blob + `<a download>` | sidePanel 导出按钮 | `tests/export.test.mjs` + `tests/export-fields.test.mjs`（UI 路径）+ 基准 B3（40 页双跑字节一致） | ✅ M5（UI 导出路径字段完整 + 双跑字节一致；真实浏览器侧同源） |
+| 整轮扫描 + 导出 0 次网络请求 | 只读 DOM，无 fetch | 全链路 | `tests/zero-network.test.mjs` + `npm run smoke:export`（真实浏览器 CDP 计数） | ✅ M5（离线探针 + 真实浏览器远程请求 0） |
+| 文案统一「可疑模式（待核对）」 | 文案单点 `src/lib/copy.js` | sidePanel + 导出 | `tests/copy-guard.test.mjs`：禁用词扫描 + 阳性对照 | ✅ M5：侧边栏空态与导出文案都走 copy 单点 + 禁用词扫描（含阳性对照） |
+| 隐私声明与零采集一致 | `docs/隐私声明.md` | 文档 + 代码 | `tests/store-assets.test.mjs`（权限逐项点名 + 零网络 + 无远程代码 + 零注入与实装一致） | ✅ M5 |
 | **零远程代码**（MV3 硬约束） | 无 CDN、无 fetch、规则随包 | 全链路 | `tests/source-hygiene.test.mjs`：源码与产物无 `http(s)://` 外链、无 `eval` | ✅ 扫描常驻（M0 起，M2 增阈值 token 门禁） |
 
 ---
@@ -180,7 +189,7 @@
 | **M2 规则引擎与按需注入** | `rules/manifest.json` 落地 + 12 条规则引擎 + 采集器 + 注入链路 + 基准达标 | ✅ 2026-10-19 |
 | **M3 页内取证高亮层** | Shadow DOM 覆盖层 + 编号徽标 + 双向联动 + 清除后 DOM diff = 0 | ✅ 2026-10-19 |
 | **M4 侧边栏取证台** | 四组分组 + `storage.session` 恢复 + 站点级折叠 | ✅ 2026-10-19 |
-| **M5 导出与设置** | Markdown/JSON 导出 + 黑白名单 + 规则开关 + README/隐私声明/商店素材 | ⬜ 未开始 |
+| **M5 导出与设置** | Markdown/JSON 导出 + 黑白名单 + 规则开关 + README/隐私声明/商店素材 | ✅ 2026-10-19 |
 | **M6 发布** | 公开仓库 + `v0.1.0` tag + Release + `plan/RELEASE-M6.md` 留档 | ⬜ 未开始 |
 
 > **DoD 只加不减**：M6 行的"附产物"三个字不得在重写里程碑表时省略或改写；要减必须在 §2 决策记录留一行理由。

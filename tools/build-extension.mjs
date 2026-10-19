@@ -18,6 +18,10 @@ export const RELEASE_DIR = join(ROOT, "release");
 export const RUNTIME_WHITELIST = [
   "manifest.json",
   "scanner.js",
+  "assets/store/icon-16.png",
+  "assets/store/icon-32.png",
+  "assets/store/icon-48.png",
+  "assets/store/icon-128.png",
   "src/background/service-worker.js",
   "src/lib/copy.js",
   "src/lib/engine.js",

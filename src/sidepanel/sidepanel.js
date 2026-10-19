@@ -2,7 +2,8 @@
 //   · 四组分组（顺序与归属都来自规则包，UI 不写死）；
 //   · 站点级折叠（同站点多次扫描按时间倒序折叠，默认展开最新一次；历史读 `storage.session`）；
 //   · 空态/错误态/陈旧态都是**显式文案**，绝不显示定性结论（见 copy.js）；
-//   · 导出走 Blob + <a download>（全本地）；导出字段顺序由 src/lib/export.js 单点决定。
+//   · 导出走 Blob + <a download>（全本地）；字段顺序 / 文件名 / MIME 全由 `src/lib/export.js`
+//     的 `exportArtifact()` 单点产出——本文件**不拼第二份**（M5 DoD 第 1/2 项的复核路径）。
 //
 // 纯逻辑单列在 `src/lib/sidepanel-view.js`（分组/折叠/恢复决策/记录形态）——本文件只做 DOM 接线，
 // 故 `initSidepanel({doc, runtime})` 可注入依赖，冷启动恢复与 SW 回收后恢复都能**离线验收**
@@ -10,7 +11,7 @@
 
 import { COPY, categoryLabel, severityLabel } from "../lib/copy.js";
 import { RULESET, RULE_SPECS } from "../lib/rules-pack.js";
-import { exportFileName, toJsonText, toMarkdown } from "../lib/export.js";
+import { exportArtifact } from "../lib/export.js";
 import {
   HISTORY_KEY,
   LAST_SCAN_KEY,
@@ -33,7 +34,13 @@ const state = {
 };
 
 /** 运行时/文档由 `initSidepanel` 注入（默认取全局；离线测试传假件）。 */
-let ctx = { doc: typeof document !== "undefined" ? document : null, runtime: typeof chrome !== "undefined" ? chrome : null };
+let ctx = {
+  doc: typeof document !== "undefined" ? document : null,
+  runtime: typeof chrome !== "undefined" ? chrome : null,
+  // 落盘 sink 也可注入：离线测试传一个"收下 (text, filename, mime)"的假件，
+  // 就能对 **UI 导出路径真正交出去的那份字节** 逐字节断言（M5 DoD 第 1/2 项）。
+  download: null,
+};
 
 const el = (id) => ctx.doc.getElementById(id);
 
@@ -240,6 +247,11 @@ async function persistSitePolicy() {
 }
 
 function download(text, filename, mime) {
+  if (ctx.download) {
+    // 注入的 sink（离线验收用）：本函数不碰宿主 API，判据可离线跑。
+    ctx.download(text, filename, mime);
+    return;
+  }
   const blob = new Blob([text], { type: mime });
   const url = URL.createObjectURL(blob);
   const anchor = ctx.doc.createElement("a");
@@ -247,6 +259,17 @@ function download(text, filename, mime) {
   anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+/** 导出（UI 路径）：产物由 `exportArtifact()` 单点产出 → 只做 Blob + `<a download>`（全本地、零网络）。 */
+export function runExport(format, scan = state.scan, manifest = RULESET) {
+  if (!scan) {
+    setStatus(COPY.notScanned);
+    return null;
+  }
+  const artifact = exportArtifact(scan, manifest, format);
+  download(artifact.text, artifact.filename, artifact.mime);
+  return artifact;
 }
 
 /** 新结果到达：更新最新一次 + 重读历史（历史由 SW 落盘，本侧只读，不各存一份）。 */
@@ -311,14 +334,8 @@ function wire() {
   el("highlight")?.addEventListener("click", () => {
     if (state.scan) send({ type: "apply-overlay", findings: state.scan.findings });
   });
-  el("export-md")?.addEventListener("click", () => {
-    if (!state.scan) return setStatus(COPY.notScanned);
-    download(toMarkdown(state.scan, RULESET), exportFileName(state.scan, "md"), "text/markdown");
-  });
-  el("export-json")?.addEventListener("click", () => {
-    if (!state.scan) return setStatus(COPY.notScanned);
-    download(toJsonText(state.scan, RULESET), exportFileName(state.scan, "json"), "application/json");
-  });
+  el("export-md")?.addEventListener("click", () => runExport("markdown"));
+  el("export-json")?.addEventListener("click", () => runExport("json"));
   el("policy-mode")?.addEventListener("change", persistSitePolicy);
   el("policy-hosts")?.addEventListener("change", persistSitePolicy);
 
@@ -346,10 +363,14 @@ export function highlightFinding(findingId, doc = ctx.doc) {
 
 /**
  * 初始化（可注入依赖：离线测试传假 DOM + 假 chrome 运行时）。
- * @param {{doc?: object, runtime?: object}} [options]
+ * @param {{doc?: object, runtime?: object, download?: Function}} [options]
  */
 export async function initSidepanel(options = {}) {
-  ctx = { doc: options.doc ?? ctx.doc, runtime: options.runtime ?? ctx.runtime };
+  ctx = {
+    doc: options.doc ?? ctx.doc,
+    runtime: options.runtime ?? ctx.runtime,
+    download: options.download ?? ctx.download,
+  };
   state.currentUrl = await currentUrl();
   wire();
   const stored = await ctx.runtime.storage.local.get(SETTINGS_KEY);

@@ -32,7 +32,10 @@ const SEGMENTS = [
   { name: "rules.bench", kind: "gate", script: "tools/bench-rules.mjs", args: ["--quiet"], note: "B1–B7 规则基准（逐规则 precision/recall 双边门）" },
   { name: "overlay.diff", kind: "tests", files: ["tests/overlay-dom-diff.test.mjs"], note: "页内取证高亮层（Shadow DOM 单容器 + 清除后 DOM diff = 0 + 编号一一对应 + 失效分支）" },
   { name: "sidepanel.restore", kind: "tests", files: ["tests/sidepanel-restore.test.mjs"], note: "侧边栏取证台（四组分组来自规则包 + storage.session 冷启动/SW 回收后恢复 + 站点级折叠 + 空态文案）" },
-  { name: "export.zero_network", kind: "not_enabled", milestone: "M5", note: "整轮扫描 + 导出 0 网络请求" },
+  { name: "export.fields", kind: "tests", files: ["tests/export-fields.test.mjs"], note: "导出字段完整 + 双跑字节一致（**UI 导出路径**）" },
+  { name: "site.settings", kind: "tests", files: ["tests/site-settings.test.mjs"], note: "站点黑白名单（不注入 + UI 明示）与规则开关（禁用不进扫描/不进导出）" },
+  { name: "export.zero_network", kind: "tests", files: ["tests/zero-network.test.mjs"], note: "整轮扫描 + 导出 0 网络请求（运行面源码断言 + 离线动态探针）" },
+  { name: "store.assets", kind: "tests", files: ["tests/store-assets.test.mjs"], note: "商店素材清单 ↔ 实物对账 + 隐私声明 ↔ 权限白名单一致" },
 ];
 
 function run(command, args) {

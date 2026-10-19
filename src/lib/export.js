@@ -181,3 +181,24 @@ export function exportFileName(scan, extension) {
   const stamp = String(scan.scanned_at).replace(/[^0-9]/g, "").slice(0, 14) || "no-timestamp";
   return `pattern-lens-evidence-${host}-${stamp}.${extension}`;
 }
+
+/** 导出格式表（单点）：格式 id / 扩展名 / MIME 只在这里定义一次（UI 不得自己拼一份）。 */
+export const EXPORT_FORMATS = [
+  { id: "markdown", extension: "md", mime: "text/markdown" },
+  { id: "json", extension: "json", mime: "application/json" },
+];
+
+/**
+ * 导出**产物**（M5 DoD 第 1/2 项的唯一产出点）：给定 `ScanResult` + 规则包 + 格式，
+ * 返回 `{format, filename, mime, text}`。UI 侧只把它交给 `Blob` + `<a download>`（全本地）。
+ *
+ * 为什么单列这一步：M5 的"字段完整 + 双跑逐字节一致"要在 **UI 导出路径**上复核，而 `sidepanel.js`
+ * 依赖宿主 `document`（只能跑扩展才验）。把"取哪份文本 / 叫什么文件名 / 什么 MIME"抽成一个**纯函数**，
+ * 离线就能对**同一条路径**逐字节断言（同 D38 的分层口径）。
+ */
+export function exportArtifact(scan, manifest, format) {
+  const spec = EXPORT_FORMATS.find((item) => item.id === format);
+  if (!spec) throw new Error(`导出被拒绝：未知格式 ${format}`);
+  const text = spec.id === "json" ? toJsonText(scan, manifest) : toMarkdown(scan, manifest);
+  return { format: spec.id, filename: exportFileName(scan, spec.extension), mime: spec.mime, text };
+}

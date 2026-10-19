@@ -18,6 +18,12 @@
   "action": {
     "default_title": "界面取证镜：检查本页"
   },
+  "icons": {
+    "16": "assets/store/icon-16.png",
+    "32": "assets/store/icon-32.png",
+    "48": "assets/store/icon-48.png",
+    "128": "assets/store/icon-128.png"
+  },
   "side_panel": {
     "default_path": "src/sidepanel/index.html"
   },

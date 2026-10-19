@@ -17,12 +17,12 @@
 // 用法：node tools/smoke-overlay.mjs [--keep]   # --keep 保留浏览器进程便于排查
 
 import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildScannerSource, ROOT } from "./bundle.mjs";
+import { removeProfile, smokeTmpRoot, wait } from "./cdp.mjs";
 
 const CHROME_CANDIDATES = [
   "C:/Program Files/Google/Chrome/Application/chrome.exe",
@@ -34,8 +34,6 @@ const CHROME_CANDIDATES = [
   "/usr/bin/chromium-browser",
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
 ];
-
-const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 
 function findBrowser() {
   return CHROME_CANDIDATES.find((path) => existsSync(path)) ?? null;
@@ -122,7 +120,7 @@ async function main() {
     return;
   }
   const source = withProbe(buildScannerSource());
-  const profile = mkdtempSync(join(tmpdir(), "pl-smoke-"));
+  const profile = mkdtempSync(join(smokeTmpRoot(), "pl-smoke-"));
   const port = 9700 + Math.floor(Math.random() * 200);
   const child = spawn(
     browser,
@@ -282,11 +280,7 @@ async function main() {
     if (!keep) {
       child.kill();
       await wait(400);
-      try {
-        rmSync(profile, { recursive: true, force: true });
-      } catch {
-        /* Windows 上浏览器可能还占着句柄：清理失败不影响结论 */
-      }
+      await removeProfile(profile);
     }
   }
 }

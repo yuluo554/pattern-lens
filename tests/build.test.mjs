@@ -14,8 +14,40 @@ import { fileURLToPath } from "node:url";
 
 import { BUNDLE_ORDER, buildScannerSource } from "../tools/bundle.mjs";
 import { BUNDLED_ONLY_DIRS, RUNTIME_WHITELIST, buildZip, renderDist, zipName } from "../tools/build-extension.mjs";
+import { ICON_SIZES, drawIcon, storeAssets } from "../tools/gen-store-icons.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+
+test("图标面：manifest.icons 引用的每个文件都在安装面白名单里，且真实存在", () => {
+  const manifest = JSON.parse(readFileSync(join(ROOT, "manifest.json"), "utf8"));
+  const icons = manifest.icons ?? {};
+  assert.deepEqual(
+    Object.keys(icons).map(Number).sort((a, b) => a - b),
+    [...ICON_SIZES].sort((a, b) => a - b),
+    "manifest.icons 的尺寸集合应与生成器声明一致",
+  );
+  for (const rel of Object.values(icons)) {
+    assert.equal(RUNTIME_WHITELIST.includes(rel), true, `${rel} 不在 RUNTIME_WHITELIST 里（dist 会漏装图标）`);
+    assert.ok(existsSync(join(ROOT, rel)), `${rel} 不存在（先跑 npm run store:icons）`);
+  }
+});
+
+test("图标确定性：盘上产物 == 重生成（逐字节），且每个都是合法 PNG（IHDR 尺寸对）", () => {
+  const files = storeAssets();
+  for (const [name, data] of files) {
+    const onDisk = readFileSync(join(ROOT, "assets", "store", name));
+    assert.equal(onDisk.equals(data), true, `${name} 与重生成结果字节不同`);
+    assert.equal(data.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", `${name} 不是 PNG 签名`);
+    const size = Number(/(\d+)\.png$/.exec(name)[1]);
+    assert.equal(data.readUInt32BE(16), size, `${name} IHDR 宽度 ≠ ${size}`);
+    assert.equal(data.readUInt32BE(20), size, `${name} IHDR 高度 ≠ ${size}`);
+    assert.equal(data[25], 6, `${name} 应为 RGBA 色彩类型`);
+  }
+});
+
+test("图标可证伪：换尺寸画出的字节必须不同（否则「逐字节一致」是恒真的）", () => {
+  assert.equal(drawIcon(48).equals(drawIcon(128)), false, "不同尺寸却同字节 → 尺寸判据失效");
+});
 
 test("安装面白名单：src/lib 下每个文件都显式登记（新增文件不许静默漂移）", () => {
   const listed = new Set(RUNTIME_WHITELIST);
