@@ -34,7 +34,7 @@
 | `node tools/check-release.mjs --pre-tag` | 见 §1.4；tag / 远端项报 SKIP，离线项全绿（`WORKTREE_CLEAN` 在提交后转 PASS） |
 | 干净环境验证（`plan/07` §3.1 第 4 条） | `git clone --no-local . /d/tmp/pl-clean-clone` → **无 `node_modules`** → `npm test` **255 项** / `npm run verify` **24 段** / `npm run build` + `--check` 逐字节一致；**干净 clone 与主仓的 zip `cmp` 逐字节一致**；干净 clone 里 `check-release.mjs --pre-tag` = PASS 16 / FAIL 0 / SKIP 8（rc=0） |
 | CI 工作流静态自查 | `.github/workflows/ci.yml`：**1 个 job**（`verify`）× **4 矩阵**（ubuntu/windows × node 22/24）× **9 步**；step `name` 无裸 `: `；`on:` 含 `push` / `pull_request` / `workflow_dispatch` |
-| GitHub Actions（首推 `main`） | **待首推验证**（本仓库此前未接远端 → 一次 CI 都没跑过；见 §1.6） |
+| GitHub Actions（首推 `main`） | **✅ 首推 4/4 绿**（2026-10-19）：branch run `#39200133922`、tag run `#39200309016`，两 run 各 4 矩阵（ubuntu/windows × 22/24）全 success |
 
 ### 1.3 交付产物与附件口径
 
@@ -61,11 +61,11 @@ git archive --format=tar --prefix=pattern-lens/ v0.1.0 | gzip -9n > /tmp/tagtree
 
 | # | 事项 | 状态 | 证据 / 说明 |
 | --- | --- | --- | --- |
-| ① | git tag（annotated）`v0.1.0`，指向发布提交，已推远端 | ⬜ 待执行 | 见 §2.1（tag 后追加） |
-| ② | GitHub Release，附件 = 确定性 zip（本地留副本 + sha256 登记 **Release 正文**，不写进包内） | ⬜ 待执行 | 见 §2.2（tag 后追加） |
-| ③ | `plan/RELEASE-M6.md`（tag 前入库，两栏）+ 阶段 7 覆盖对账表（三态逐条） | ✅ 本文件 | tag 树里本文件已含 §一 + §3 覆盖对账表；§二 为 tag 后追加 |
-| ④ | `node tools/check-release.mjs --online` 无 FAIL | ⬜ 待执行 | 见 §2.3 |
-| ⑤ | 发布后：干净 clone 复核 + 附件真下载 `sha256` 对齐 + tag 树重建产物 `cmp` 逐字节一致 | ⬜ 待执行 | 见 §2.4 |
+| ① | git tag（annotated）`v0.1.0`，指向发布提交，已推远端 | ✅ 2026-10-19 | 对象 `852a4c43af16…` → commit `6528cdfd…`；两端对象哈希一致（详见 §2.1） |
+| ② | GitHub Release，附件 = 确定性 zip（本地留副本 + sha256 登记 **Release 正文**，不写进包内） | ✅ 2026-10-19 | 公开仓 `yuluo554/pattern-lens`；附件 164,266 字节，sha256 `180bcaea…`（详见 §2.2） |
+| ③ | `plan/RELEASE-M6.md`（tag 前入库，两栏）+ 阶段 7 覆盖对账表（三态逐条） | ✅ 本文件 | tag 树里本文件已含 §一 + §三 覆盖对账表；§二 为 tag 后追加 |
+| ④ | `node tools/check-release.mjs --online` 无 FAIL | ✅ 2026-10-19 | **PASS 24 / FAIL 0 / SKIP 0**，rc=0（详见 §2.3） |
+| ⑤ | 发布后：干净 clone 复核 + 附件真下载 `sha256` 对齐 + tag 树重建产物 `cmp` 逐字节一致 | ✅ 2026-10-19 | 三条全做（详见 §2.4）；下载件 == tag 树重建件（`cmp` 逐字节一致） |
 
 > **DoD 打勾只能在事实落地后**：①②④⑤ 在 tag 前保持 ⬜，落地后翻 ✅ 并指向 §二（`plan/06` §六 纪律）。
 
@@ -133,33 +133,64 @@ cmp release/pattern-lens-0.1.0.zip /d/tmp/tagtree/release/pattern-lens-0.1.0.zip
 | --- | --- |
 | tag 名 | `v0.1.0` |
 | 类型 | annotated（`git cat-file -t v0.1.0` = `tag`） |
-| tag 对象 | 待回填 |
-| 指向 commit | 待回填 |
-| 远端 | 待回填（`git push origin v0.1.0`；对象哈希两端一致） |
+| tag 对象 | `852a4c43af16d0c857036f292040cffd01977118` |
+| 指向 commit | `6528cdfdcb1577d7773877709f49cb9d8f6cadc4`（"M6 补记：干净环境验证实测……"） |
+| 远端 | 已推（`git push origin v0.1.0`）；**对象哈希两端一致** = `852a4c43af16…`（本地 `rev-parse` == 远端 `git/ref/tags/v0.1.0` 的 `object.sha`） |
 
 ### 2.2 GitHub Release
 
 | 项 | 值 |
 | --- | --- |
 | 仓库 | https://github.com/yuluo554/pattern-lens （公开） |
-| Release URL | 待回填 |
-| 状态 | 待回填（`draft=false`） |
-| 附件 | `pattern-lens-0.1.0.zip` — 164,266 字节，sha256 待回填 |
-| 下载后重算 sha256 | 待回填（`gh release download` → `sha256sum -c release/SHA256SUMS`） |
-| 正文 | 含附件 sha256；口径与验证结论 |
+| Release URL | https://github.com/yuluo554/pattern-lens/releases/tag/v0.1.0 |
+| 状态 | 已发布（`draft=false`） |
+| 附件 | `pattern-lens-0.1.0.zip` — 164,266 字节，sha256 `180bcaea57bb06b90383ea07249add04aeb2ade3d70aad8c14dc5e3827172af2` |
+| 下载后重算 sha256 | ✅ 与 `release/SHA256SUMS` 逐字节一致（`gh release download` → `sha256sum` → `cmp`） |
+| 正文 | 含附件 sha256 对照表；口径与验证结论 |
 
 ### 2.3 `check-release.mjs --online` 终态
 
 ```text
-待回填（预期：PASS N / FAIL 0 / SKIP 0，rc=0）
+PASS 24 / FAIL 0 / SKIP 0   （rc=0；tag 时点基线，本留档已在树里）
 ```
+
+| 项 | 值 |
+| --- | --- |
+| 汇总 | **PASS 24 / FAIL 0 / SKIP 0**，rc=0 |
+| `REPO_PUBLIC` | PASS（`https://github.com/yuluo554/pattern-lens` PUBLIC） |
+| `REMOTE_TAG` | PASS（两端一致 `852a4c43af16`） |
+| `CI_RUNS` | PASS（2 条 push run；发布提交 branch run `#39200133922` 与 tag run `#39200309016` 均 success） |
+| `REMOTE_RELEASE` | PASS（`v0.1.0` draft=false assets=`pattern-lens-0.1.0.zip`） |
+| `RELEASE_NOTES_SHA` / `RELEASE_ASSET_SHA` | PASS（正文含 sha256；远端附件 digest 与本地一致） |
+
+> 至此 **M6 三件套（tag / Release / 留档）全部落地**，离线门与在线门均无 FAIL。
+> **门自变留痕**：本栏的 `PASS 24` 是**留档已入库之后**测的（§三 覆盖对账表让检查项从 23 增到 24）；
+> §一 的 tag 前数字与这里的差异，是"留档进了判据面"这件事造成的，不是门变了（skill "门自变"条）。
 
 ### 2.4 首推后回写
 
-- [ ] CI 首推：`main` branch run 与 `v0.1.0` tag run 两条均绿；push 数 = run 数逐条配对（`event/headBranch/headSha/conclusion`）。
-- [ ] 干净 clone 复核：`git clone --no-local` → 不装包 → `npm test` + `npm run verify` + `npm run build` 逐条跑通。
-- [ ] 真下载复核：附件下载回来重算 sha256 与 `release/SHA256SUMS` 一致；从 tag 树重建产物与之 `cmp` 逐字节一致。
-- [ ] `plan/00` §5 + `plan/06` §一 + `README.md` 状态行三处同一次提交翻 ✅（布局门 `LAYOUT.STATUS`）。
+- [x] CI 首推：`main` branch run `#39200133922`（4 矩阵全 success）与 `v0.1.0` tag run `#39200309016`（4 矩阵全 success）
+      两条均绿；**push 数 = run 数对账**（2 次 push ↔ 2 条 push run，按 `event/headBranch/headSha/conclusion` 逐条配对）。
+- [x] 干净 clone 复核：`git clone --no-local . /d/tmp/pl-clean-clone` → **无 `node_modules`** → `npm test`（255 项）+
+      `npm run verify`（24 段）+ `npm run build` 逐条跑通；干净 clone 与主仓 zip `cmp` 逐字节一致。
+- [x] 真下载复核：`gh release download v0.1.0 -D /d/tmp/rel-verify` → sha256 与 `release/SHA256SUMS` 一致；
+      **从 tag 树重建**（`git clone --no-local --branch v0.1.0` → `npm run build`）与之 `cmp` **逐字节一致**。
+- [x] `plan/00` §5 + `plan/06` §一 + `README.md` 状态行三处同一次提交翻 ✅（布局门 `LAYOUT.STATUS`）。
+
+### 2.5 tag 后追加的事实（只允许非交付面提交）
+
+tag 之后本棒只做了**追加类提交**（提交信息用"追加/补记/对账"语义词），交付面（`src/`、`rules/`、
+`manifest.json`、`assets/store/`）**零差异**——`POST_TAG_SCOPE` 与 `DELIVERABLE_UNCHANGED` 两条机器判据守之。
+
+| 缺陷（发布门自测时扫出） | 症状 | 处理 |
+| --- | --- | --- |
+| `%(taggeremail)` 带尖括号 | `IDENTITY_NOREPLY` 把 `282769740+yuluo554@users.noreply.github.com`（**正确的 noreply 身份**）判成非 noreply | 剥掉 `<`/`>` 再判（`plan/07` §3.4 脱敏条：tagger 邮箱同查） |
+| `gh api` 瞬时断连未重试 | `REMOTE_TAG` 报 `wsarecv: forcibly closed`——本机 `github.com:443` 间歇不通（AGENTS.md 实测），**网络抖动被当成发布未达成** | `gh()` 对瞬时错误（`wsarecv`/`ECONNRESET`/`timeout`/`TLS`/`EOF`）重试 3 次；非瞬时错误不重试 |
+| tag 后范围判据过窄 | 初版 `POST_TAG_DOC_ONLY` 只认 `plan/`、`README.md`——但本棒的发布门修正落在 `tools/`，会被误判越界 | 改为**非交付面**口径（`plan/ tests/ tools/ docs/ README AGENTS`）+ 独立第二条 `DELIVERABLE_UNCHANGED`（交付面零差异） |
+
+> **为什么不重打 tag**：缺陷落在"**你刚发出去的那道门**"上（发布门自身），而非交付物；
+> 附件 zip 与 tag 树逐字节同源已验，交付面零差异。按 skill "已发布窗口关闭后的缺陷处置"条，
+> **不重写 tag**，走追加提交 + 本栏登记（重打更便宜只在"窗口未关 + 没登记过哈希"时成立，本仓已登记）。
 
 ## 三、阶段 7 出口门覆盖对账（三态逐条，不许留空）
 
@@ -168,21 +199,21 @@ cmp release/pattern-lens-0.1.0.zip /d/tmp/tagtree/release/pattern-lens-0.1.0.zip
 
 | 出口门 | 归宿 | 依据 |
 | --- | --- | --- |
-| 发布物本体已验（真下载 + 中立目录） | 待首推 | §2.4 第 3 条（`gh release download` + 中立目录复核） |
-| 入仓工具在无 `.git` 树里也能跑 | 实现 | 发布门与构建器均不读 git 历史以外事实；`npm run build` / `check-release.mjs` 离线项在干净 clone 跑通 |
-| 附件与 tag 树逐字节同源 | 待首推 | §2.4 第 3 条（tag 树重建 zip 与下载件 `cmp`；zip 确定性由 `build-extension --check` 常驻保证） |
+| 发布物本体已验（真下载 + 中立目录） | 实现 | §2.4 第 3 条（`gh release download` 到 `/d/tmp/rel-verify`；sha256 与本地留档件一致） |
+| 入仓工具在无 `.git` 树里也能跑 | 实现 | 发布门与构建器均不读 git 历史以外事实；`npm run build` / `check-release.mjs` 离线项在干净 clone 跑通（§2.4 第 2 条） |
+| 附件与 tag 树逐字节同源 | 实现 | §2.4 第 3 条（`git clone --no-local --branch v0.1.0` → `npm run build` → 与下载件 `cmp` 逐字节一致） |
 | 源码包自足（`MANIFEST.in` 白名单覆盖数据目录） | 不适用 | 本项目不发行 Python 源码包；附件 = 扩展 zip（D16） |
-| README 提到的附件名必须真在 Release 里 | 待首推 | `check-release.mjs` 的 `REMOTE_RELEASE`（按 `ZIP_NAME` 查 assets） |
+| README 提到的附件名必须真在 Release 里 | 实现 | `check-release.mjs` 的 `REMOTE_RELEASE`（按 `ZIP_NAME` 查 assets，实测 `assets=pattern-lens-0.1.0.zip`） |
 | 对外附带样例产物在中立示意目录生成 | 不适用 | 无此类样例产物；fixture 与商店截图都是仓库内生成物 |
 | 附件口径四选一择一留档 | 实现 | §1.3 写明取 D16（构建产物本身）；合法性 = 干净 clone 重生成逐字节 `cmp` 一致 |
-| 附件 sha256 写 Release 正文（不写包内） | 待首推 | §1.3 复验方法 + §2.2；`RELEASE_DOC_NO_DIGEST` 守"§一 无哈希" |
-| tag 后追加提交（tag 树不变 → 包字节不变） | 实现 | §二 为 tag 后追加栏；`POST_TAG_DOC_ONLY` 守"只含 plan/、README.md" |
-| 已发布窗口关闭后的缺陷处置 | 实现 | §二 只允许文档面追加；无功能代码改动（提交信息用"追加/补记/对账"语义词） |
-| DoD 打勾只能在事实落地后 | 实现 | §1.4 三件套 ①②④⑤ 在 tag 前为 ⬜，落地后翻 ✅ 并指向 §二 |
-| tag 之后只允许文档面提交 | 实现 | `check-release.mjs` 的 `POST_TAG_DOC_ONLY`（`git diff --name-only v0.1.0..HEAD` 只含 `plan/`、`README.md`） |
-| annotated tag 两端一致 = 对象哈希一致 | 待首推 | `check-release.mjs` 的 `REMOTE_TAG`（本地 `rev-parse v0.1.0` == 远端 `git/ref/tags/v0.1.0` 的 `object.sha`） |
-| push 数 = run 数对账 | 待首推 | `check-release.mjs` 的 `CI_RUNS`（发布提交 branch run 与 tag run 两条都 success） |
-| 四矩阵同点全红 = CI 步骤接线缺陷非平台差异 | 待首推 | CI 矩阵 `os × node` = 4（ubuntu/windows × 22/24）；同点全红即查接线 |
+| 附件 sha256 写 Release 正文（不写包内） | 实现 | §1.3 复验方法 + §2.2；`RELEASE_DOC_NO_DIGEST` 守"§一 无哈希" |
+| tag 后追加提交（tag 树不变 → 包字节不变） | 实现 | §2.5 为 tag 后追加栏；`POST_TAG_SCOPE` 守"只含非交付面" |
+| 已发布窗口关闭后的缺陷处置 | 实现 | §2.5（缺陷落在发布门自身；不重写 tag，走追加提交 + 登记"为什么不重打"） |
+| DoD 打勾只能在事实落地后 | 实现 | §1.4 三件套在 tag 前为 ⬜，落地后翻 ✅ 并指向 §二 |
+| tag 之后只允许文档面提交 | 实现 | `check-release.mjs` 的 `POST_TAG_SCOPE`（非交付面：`plan/ tests/ tools/ docs/ README AGENTS`）+ `DELIVERABLE_UNCHANGED`（交付面零差异） |
+| annotated tag 两端一致 = 对象哈希一致 | 实现 | `check-release.mjs` 的 `REMOTE_TAG`（本地 `rev-parse v0.1.0` == 远端 `git/ref/tags/v0.1.0` 的 `object.sha`，实测 `852a4c43af16`） |
+| push 数 = run 数对账 | 实现 | `check-release.mjs` 的 `CI_RUNS`（2 次 push ↔ 2 条 push run；branch run `#39200133922` 与 tag run `#39200309016` 两条都 success） |
+| 四矩阵同点全红 = CI 步骤接线缺陷非平台差异 | 实现 | CI 矩阵 `os × node` = 4（ubuntu/windows × 22/24）；两 run 各 4 矩阵全绿，无同点全红 |
 | 多平台冻结产物原生构建 + 原生冒烟 | 不适用 | 无跨平台编译产物；zip 由 Node 生成且跨平台重生成逐字节一致（`build-extension --check`） |
 | 每条已交付命令都有离线 CI 冒烟 | 实现 | CI 步骤：`layout / hash-rules --check / npm test / npm run build / build-extension --check / npm run verify`；`check-release.mjs` 的 `CI_STEPS` 守之 |
 | 发布门可复跑（离线 + `--online` + `--pre-tag`） | 实现 | `tools/check-release.mjs` 三模（`--pre-tag` 让门能随预备提交进 tag 树） |
@@ -191,7 +222,7 @@ cmp release/pattern-lens-0.1.0.zip /d/tmp/tagtree/release/pattern-lens-0.1.0.zip
 | 发布门不进 CI | 实现 | `CI_STEPS` 断言 CI 工作流不含 `check-release`（发布前本门该红） |
 | 「发布未达成」与「环境缺失」两个退出码语义 | 实现 | `ReleaseNotAchieved`（exit 1）vs `EnvironmentMissing`（exit 3）两类异常分离 |
 | 脱敏：提交身份 + tagger 邮箱 | 实现 | `check-release.mjs` 的 `IDENTITY_NOREPLY`（提交身份 + tag 对象 tagger 一并查） |
-| 干净环境按 README 逐条跑通 | 待首推 | §2.4 第 2 条（`git clone --no-local` → 不装包逐条跑） |
+| 干净环境按 README 逐条跑通 | 实现 | §2.4 第 2 条（`git clone --no-local` → 不装包逐条跑：test 255 / verify 24 段 / build + --check） |
 | 随包 README 状态行不承载"发布到哪一步" | 实现 | 附件 zip 的安装面白名单（`RUNTIME_WHITELIST`）**不含 `README.md`**——随包文档里根本没有状态行可落后；仓库 README 的状态表受布局门 `LAYOUT.STATUS` 约束（三处一致），tag 时诚实地写 M6 ⬜、落地后转 ✅（`plan/07` §3.3 只允许文档面追加） |
 | 门读"人写的文档"时剥注释/代码块 | 实现 | `check-release.mjs` 的 `stripProse()`（判据先剥 ``` 代码块与 `<!-- -->` 注释，防作者样例行被当值登记） |
 | 校验和清单三种合法形态都认 | 实现 | `check-release.mjs` 的 `SHA256_LOCAL` 正则收 `<hex> <name>` / `<hex> *<name>` / `sha256: <hex> <name>` |
@@ -206,6 +237,10 @@ cmp release/pattern-lens-0.1.0.zip /d/tmp/tagtree/release/pattern-lens-0.1.0.zip
 | **K31** | 发布门的**常驻测试只测门的运行时形态**（三模语义 / SKIP≠PASS / 缺档可构造），**不测"当前 0 FAIL"**——否则发布前 CI 必红、发布后随留档入库翻转 | `tests/release-gate.test.mjs` |
 | **K32** | 发布留档路径由 `RELEASE_DOC_PATH` 决定（默认 `plan/RELEASE-M6.md`）；该变量是**测试用 seam**，让"缺档报 SKIP / 报 FAIL"两条模式语义在留档存在之后仍可构造与断言 | `tools/check-release.mjs` / `tests/release-gate.test.mjs` |
 | **K33** | `release/SHA256SUMS` 是**生成物**（由 `npm run build` 产出，随 `--check` 逐字节比对），形态取 `<hex>  *<name>` | `tools/build-extension.mjs` |
+| **K34** | tag 后范围判据 = **非交付面**（`plan/ tests/ tools/ docs/ README AGENTS`）+ 独立第二条 `DELIVERABLE_UNCHANGED`（`src/ rules/ manifest.json assets/store/` 零差异）；两条都过才算"tag 后只允许非交付面提交" | `tools/check-release.mjs` |
+| **K35** | 发布门对**瞬时网络错误**（`wsarecv` / `ECONNRESET` / `timeout` / `TLS` / `EOF`）重试 3 次；**非瞬时错误不重试**（避免把判据错误拖成 3 倍耗时）。本机 `github.com:443` 间歇不通是已登记环境事实 | `tools/check-release.mjs` 的 `gh()` |
+| **K36** | 脱敏扫描走**文件级豁免**（仅 `tools/check-release.mjs` + `plan/RELEASE-M6.md` 两份，必然含模式词面）+ **阳性对照**（合成本机路径必被扫出，否则"0 命中"证明不了任何事） | `tools/check-release.mjs` 的 `SCAN_EXEMPT` / `findLocalPaths` |
+| **K37** | `IDENTITY_NOREPLY` 判定前须剥掉 `%(taggeremail)` 的尖括号（`<a@b>` → `a@b`），否则正确的 noreply 身份会被判成泄露 | `tools/check-release.mjs` |
 
 ## 五、本轮修掉的缺陷
 

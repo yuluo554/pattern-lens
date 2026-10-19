@@ -7,7 +7,7 @@
 - **版本**：v1（2026-10-17 题定稿；需求侧与开源检索基准日 2026-10-17）；M0 骨架落地 2026-10-18
 - **一句话定位**：点一下扩展图标，侧边栏列出当前页所有**可疑模式（待核对）**——规则名 + 原文片段 + 元素定位 + 严重度，页面上用编号徽标高亮取证，一键导出证据包。**做取证，不做打分**：无证据节点不产出结论。
 - **交付形态**：**唯一形态** = Chrome/Edge MV3 扩展（侧边栏 + 按需注入 content script + service worker），纯前端、无后端、无模型、无远程代码。不设备选形态。
-- **当前状态**：🟡 **M0 / M1 / M2 / M3 / M4 完成**（M3 = 页内取证高亮层：Shadow DOM 覆盖层 + 编号徽标 + 双向联动 + 清除后 DOM diff = 0，含真实浏览器冒烟；M4 = 侧边栏取证台：四组分组来自规则包 + `storage.session` 冷启动/SW 回收后恢复 + 站点级折叠），M5–M6 未开工。台账状态列按**实际验证过的证据**翻转，未验证项保持 ⬜。
+- **当前状态**：✅ **M0 / M1 / M2 / M3 / M4 / M5 / M6 全部完成**（M6 = 发布：公开仓 + `v0.1.0` tag + Release（确定性 zip）+ `plan/RELEASE-M6.md` 留档；发布门 `--online` PASS 24 / FAIL 0）。台账状态列按**实际验证过的证据**翻转。
 
 ---
 
@@ -30,7 +30,7 @@
 | `plan/HANDOFF-M2.md` | **启动第 2 棒时读的交接单**（M1 收尾时写） | ✅ M1 收尾 |
 | `plan/HANDOFF-M3.md` | **启动第 3 棒时读的交接单**（M2 收尾时写） | ✅ M2 收尾 |
 | `plan/HANDOFF-M4.md` | **启动第 4 棒时读的交接单**（M3 收尾时写） | ✅ M3 收尾 |
-| `plan/RELEASE-M6.md` | 发布留档（tag 前事实 / tag 后追加，两栏） | ⬜ 待 M6 |
+| `plan/RELEASE-M6.md` | 发布留档（tag 前事实 / tag 后追加，两栏）+ 阶段 7 覆盖对账表 | ✅ M6 |
 | `manifest.json` + `src/` | MV3 清单与扩展源码（引擎/采集器/注入链路已接入） | 🟡 骨架 M0，引擎链路 M2，页内取证层 M3，侧边栏取证台 M4，导出与设置 M5 |
 | `rules/manifest.json` + `rules/dp-*.json` | 规则包版本/阈值（唯一数值真相源）+ 首批 12 条规则 | ✅ 数据 M0 / 引擎接入 M2 |
 | `data/fixtures/` | 40 页合成 fixture + 逐页真值（`page-NN/truth.json`）+ 覆盖矩阵（`COVERAGE.md`）+ 压力页 | ✅ M1 |
@@ -155,7 +155,6 @@
 | 测试套件 | `tests/` | M0–M5 | `git ls-files tests` + `npm test` |
 | README | `README.md` | M0（骨架）/ M5（定稿） | `git ls-files README.md` |
 | 发布留档 | `plan/RELEASE-M6.md` | M6 | `git cat-file -e v0.1.0:plan/RELEASE-M6.md` |
-
 > **纪律**：上表任一行在 M6 指不到实物，该项从 `plan/01` §三 与评分表同时删除，不得留成无主承诺。
 
 ---
@@ -190,7 +189,7 @@
 | **M3 页内取证高亮层** | Shadow DOM 覆盖层 + 编号徽标 + 双向联动 + 清除后 DOM diff = 0 | ✅ 2026-10-19 |
 | **M4 侧边栏取证台** | 四组分组 + `storage.session` 恢复 + 站点级折叠 | ✅ 2026-10-19 |
 | **M5 导出与设置** | Markdown/JSON 导出 + 黑白名单 + 规则开关 + README/隐私声明/商店素材 | ✅ 2026-10-19 |
-| **M6 发布** | 公开仓库 + `v0.1.0` tag + Release + `plan/RELEASE-M6.md` 留档 | ⬜ 未开始 |
+| **M6 发布** | 公开仓库 + `v0.1.0` tag + Release + `plan/RELEASE-M6.md` 留档 | ✅ 2026-10-19 |
 
 > **DoD 只加不减**：M6 行的"附产物"三个字不得在重写里程碑表时省略或改写；要减必须在 §2 决策记录留一行理由。
 > **状态副本一致性**：上表 + `plan/06` 状态表 + `README.md` 状态行三处由 `tools/check-sprint-layout.mjs` 逐处比对，任一处不一致即布局门红。

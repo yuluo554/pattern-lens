@@ -141,7 +141,8 @@ function checkIdentityNoreply() {
   scanned.commits = emails.size;
   let tagger = null;
   try {
-    tagger = git(["for-each-ref", "--format=%(taggeremail)", `refs/tags/${TAG}`]).trim() || null;
+    // for-each-ref 的 %(taggeremail) 带尖括号（`<a@b>`）——剥掉再判，否则 noreply 也判成非 noreply
+    tagger = git(["for-each-ref", "--format=%(taggeremail)", `refs/tags/${TAG}`]).trim().replace(/^<|>$/g, "") || null;
   } catch {
     tagger = null;
   }
@@ -351,16 +352,23 @@ function checkTagPresent() {
   }
 }
 
-/** tag 之后只允许文档面提交（`git diff --name-only v0.1.0..HEAD` 只含 plan/、README.md）。 */
-function checkPostTagDocOnly() {
+/** tag 之后只允许**非交付面**提交（文档 / 测试 / 发布期工具），交付面（src/、rules/、manifest.json、
+ * assets/store/）一律不许动——动了就得升版本号重发。口径按本仓实况写（见 `plan/RELEASE-M6.md` §二/§三）。 */
+const POST_TAG_ALLOWED_PREFIX = ["plan/", "tests/", "tools/", "docs/"];
+const POST_TAG_ALLOWED_FILE = ["README.md", "AGENTS.md"];
+const DELIVERABLE_PREFIX = ["src/", "rules/", "assets/store/"];
+const DELIVERABLE_FILE = ["manifest.json"];
+function checkPostTagScope() {
   if (MODE === "pre-tag") {
-    add("POST_TAG_DOC_ONLY", "SKIP", "pre-tag 模式不查 tag 后差异");
+    add("POST_TAG_SCOPE", "SKIP", "pre-tag 模式不查 tag 后差异");
+    add("DELIVERABLE_UNCHANGED", "SKIP", "pre-tag 模式不查 tag 后差异");
     return;
   }
   try {
     git(["rev-parse", TAG]);
   } catch {
-    add("POST_TAG_DOC_ONLY", "SKIP", "tag 未建，无可比对");
+    add("POST_TAG_SCOPE", "SKIP", "tag 未建，无可比对");
+    add("DELIVERABLE_UNCHANGED", "SKIP", "tag 未建，无可比对");
     return;
   }
   // 中文路径八进制转义会击穿 startswith 白名单判定 → core.quotepath=false + strip('"') 双保险
@@ -368,24 +376,36 @@ function checkPostTagDocOnly() {
     .split("\n")
     .map((name) => name.replace(/^"|"$/g, "").trim())
     .filter(Boolean);
-  const allowed = (name) => name.startsWith("plan/") || name === "README.md";
+  const allowed = (name) => POST_TAG_ALLOWED_PREFIX.some((p) => name.startsWith(p)) || POST_TAG_ALLOWED_FILE.includes(name);
   const bad = names.filter((name) => !allowed(name));
-  add("POST_TAG_DOC_ONLY", bad.length === 0 ? "PASS" : "FAIL", bad.length ? `越界: ${bad.join(",")}` : `${names.length} 项全在文档面`);
+  add("POST_TAG_SCOPE", bad.length === 0 ? "PASS" : "FAIL", bad.length ? `越界: ${bad.join(",")}` : `${names.length} 项全在非交付面（plan/ tests/ tools/ docs/ README AGENTS）`);
+  // 第二条独立判据：**交付面**必须零差异（tag 之后任何 src/rules/manifest/图标改动都须升版本号重发）
+  const deliverable = names.filter((name) => DELIVERABLE_PREFIX.some((p) => name.startsWith(p)) || DELIVERABLE_FILE.includes(name));
+  add("DELIVERABLE_UNCHANGED", deliverable.length === 0 ? "PASS" : "FAIL", deliverable.length ? `交付面被改动: ${deliverable.join(",")}（须升版本号重发）` : "交付面（src/ rules/ manifest.json assets/store/）tag 后零差异");
 }
 
 // ── 在线项（--online 才查）────────────────────────────────────────────────────
 
 function gh(ghArgs) {
-  try {
-    return execFileSync("gh", ghArgs, { cwd: ROOT, encoding: "utf8" });
-  } catch (error) {
-    const message = `${error.stderr ?? ""}${error.message ?? ""}`;
-    if (/command not found|not logged|authentication|no oauth token|gh: 未登录/i.test(message)) {
-      throw new EnvironmentMissing(`gh 不可用或未登录：${message.split("\n")[0]}`);
+  // 本机 `github.com:443` 可能间歇不通（AGENTS.md 实测）——重试 3 次再判，别把网络抖动当发布未达成。
+  let lastError = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return execFileSync("gh", ghArgs, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    } catch (error) {
+      lastError = error;
+      const message = `${error.stderr ?? ""}${error.message ?? ""}`;
+      if (/command not found|not logged|authentication|no oauth token|gh: 未登录/i.test(message)) {
+        throw new EnvironmentMissing(`gh 不可用或未登录：${message.split("\n")[0]}`);
+      }
+      if (/HTTP 404|Not Found/i.test(message)) {
+        throw new ReleaseNotAchieved(`远端对象 404（还没建仓/建 tag/发 Release）：${message.split("\n")[0]}`);
+      }
+      if (!/wsarecv|forcibly closed|ECONNRESET|timeout|TLS|EOF/i.test(message)) break; // 非瞬时错误不重试
     }
-    if (/HTTP 404|Not Found/i.test(message)) throw new ReleaseNotAchieved(`远端对象 404（还没建仓/建 tag/发 Release）：${message.split("\n")[0]}`);
-    throw new ReleaseNotAchieved(message.split("\n")[0]);
   }
+  const message = `${lastError?.stderr ?? ""}${lastError?.message ?? ""}`;
+  throw new ReleaseNotAchieved(message.split("\n")[0]);
 }
 
 function skipRemote(id) {
@@ -474,7 +494,7 @@ const OFFLINE_CHECKS = [
   checkReleaseDocNoDigest,
   checkCoverageTable,
   checkTagPresent,
-  checkPostTagDocOnly,
+  checkPostTagScope,
 ];
 
 const ONLINE_CHECKS = [

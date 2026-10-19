@@ -18,13 +18,15 @@ Chrome / Edge **Manifest V3** 浏览器扩展 · 零后端 · 零第三方依赖
 | M3 | 页内取证高亮层：Shadow DOM 覆盖层 + 编号徽标 + 双向联动 | ✅ 2026-10-19 |
 | M4 | 侧边栏取证台：四组分组 + `storage.session` 恢复 + 站点级折叠 | ✅ 2026-10-19 |
 | M5 | 导出与设置：Markdown/JSON 导出、黑白名单、规则开关、隐私声明、商店素材、README 定稿 | ✅ 2026-10-19 |
-| M6 | 发布：公开仓库 + `v0.1.0` tag + Release（确定性 zip）+ 发布留档 | ⬜ 未开始 |
+| M6 | 发布：公开仓库 + `v0.1.0` tag + Release（确定性 zip）+ 发布留档 | ✅ 2026-10-19 |
 
-> **当前状态：M0–M5 完成，M6（发布）未开工**——
+> **当前状态：M0–M6 全部完成（v0.1.0 已发布）**——
 > **M2 起扩展已能真扫页面**（点击图标 → 按需注入 → 引擎判定 → 结果回传落 `storage.session`）；
 > **M3 起页内取证层可用**（编号徽标挂在 Shadow DOM 覆盖层里；点条目滚动闪光、点徽标回高亮侧边栏条目；清除后页面"像没被碰过"）；
 > **M4 起侧边栏取证台可用**（四组分组来自规则包；关掉再开、SW 被回收后重开仍恢复上次结果；同站点多次扫描按时间倒序折叠）；
-> **M5 起导出与设置可用**（Markdown/JSON 一键导出、站点黑白名单、规则逐条开关、隐私声明与商店素材齐全、本 README 定稿）。
+> **M5 起导出与设置可用**（Markdown/JSON 一键导出、站点黑白名单、规则逐条开关、隐私声明与商店素材齐全）；
+> **M6 起已发布**（[Release v0.1.0](https://github.com/yuluo554/pattern-lens/releases/tag/v0.1.0)，
+> 附件 = 确定性 zip；CI 首推 4/4 绿）。
 > 里程碑细节与已知未验证项见 [`plan/06-里程碑与每周演示.md`](plan/06-里程碑与每周演示.md)。
 
 ## 安装
@@ -43,7 +45,7 @@ npm run build         # 产出 dist/（可 Load unpacked 的扩展树）
 > **不需要 `npm install`**：`dependencies` 与 `devDependencies` 均为空，`git clone` 后可直接跑 `npm run build` / `npm test`。
 > 扩展要求 Chrome / Edge **114+**（`chrome.sidePanel` 的起点；`manifest.json` 已声明 `minimum_chrome_version`）。
 
-**方式二：从 Release 下载 zip**（M6 发布后提供）——解压后同样在 `chrome://extensions` 里"加载已解压的扩展程序"。
+**方式二：从 [Release](https://github.com/yuluo554/pattern-lens/releases/tag/v0.1.0) 下载 zip** —— 解压后同样在 `chrome://extensions` 里"加载已解压的扩展程序"。
 
 ## 使用
 
@@ -143,7 +145,7 @@ npm run store:screenshots # 用真实浏览器渲染产出商店截图（缺浏�
 - **商业侧未核验**：Chrome 应用商店在基准日（2026-10-17）本机不可达，故 README 不写"商店里没有同类产品"这类断言。
 - **首期范围**：12 条规则；规则包热更新、多语言 UI、PDF 导出为 roadmap。
 - **浏览器兼容**：首期只支持 Chrome / Edge 114+（`chrome.sidePanel` 起点）。
-- **CI 未实跑**：本仓库**未接远端** → 一次 CI 都没跑过；里程碑 DoD 里的 CI 项一律写"本地等价校验（未接远端，CI 待首推验证）"。
+- **CI 已实跑**：首推 4/4 绿（`ubuntu`/`windows` × Node 22/24），branch run 与 tag run 两条均 success。
 
 ## 许可
 
