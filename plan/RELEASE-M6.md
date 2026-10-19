@@ -172,9 +172,9 @@ PASS 25 / FAIL 0 / SKIP 0   （rc=0；tag 时点基线，本留档已在树里�
 
 ### 2.4 首推后回写
 
-- [x] CI 首推：`main` branch run `#39200133922`（4 矩阵全 success）、`v0.1.0` tag run `#39200309016`（4 矩阵全 success）、
-      收尾回写 branch run `#39202428486`（4 矩阵全 success）；**push 数 = run 数对账**（3 次 push ↔ 3 条 push run，
-      按 `event/headBranch/headSha/conclusion` 逐条配对）。
+- [x] CI 首推：**push 数 = run 数对账**——**截至 `870bf8d` 共 4 = 4**（4 次 push ↔ 4 条 push run，按
+      `event/headBranch/headSha/conclusion` 逐条配对）；**此后文档面提交恒 1 push = 1 run**（口径 = 写快照点 + 停止信号）。
+      发布提交 branch run `#39200133922` 与 tag run `#39200309016` **两条都必须绿**（其余历史 run 只登记不判红）。
 - [x] 干净 clone 复核：`git clone --no-local . /d/tmp/pl-clean-clone` → **无 `node_modules`** → `npm test`（255 项）+
       `npm run verify`（24 段）+ `npm run build` 逐条跑通；干净 clone 与主仓 zip `cmp` 逐字节一致。
 - [x] 真下载复核：`gh release download v0.1.0 -D /d/tmp/rel-verify` → sha256 与 `release/SHA256SUMS` 一致；
