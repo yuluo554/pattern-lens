@@ -31,6 +31,13 @@ test("安装面白名单：src/lib 下每个文件都显式登记（新增文件
   }
 });
 
+test("拼接序覆盖全部 src/content/**（新增 content 模块不许漏登记进 BUNDLE_ORDER）", () => {
+  const bundled = new Set(BUNDLE_ORDER);
+  for (const file of readdirSync(join(ROOT, "src", "content")).filter((name) => name.endsWith(".js"))) {
+    assert.equal(bundled.has(`src/content/${file}`), true, `src/content/${file} 没进 BUNDLE_ORDER（不会被拼进 scanner.js）`);
+  }
+});
+
 test("renderDist() 产出的文件集合与白名单一致，且每个文件都存在", () => {
   const files = renderDist();
   assert.deepEqual([...files.keys()].sort(), [...RUNTIME_WHITELIST].sort());

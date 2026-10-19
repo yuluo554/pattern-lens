@@ -23,7 +23,9 @@ export const BUNDLE_ORDER = [
   "src/lib/ordering.js",
   "src/lib/engine.js",
   "src/lib/site-policy.js",
+  "src/lib/copy.js",
   "src/content/collector.js",
+  "src/content/overlay.js",
   "src/content/scanner.js",
 ];
 

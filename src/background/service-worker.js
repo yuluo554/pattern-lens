@@ -94,6 +94,10 @@ if (HAS_RUNTIME) {
         return { version: RULESET.ruleset_version, hash: RULESET.ruleset_hash, rule_count: RULESET.rule_files.length };
       }
       if (message?.type === "clear-overlay" || message?.type === "focus-finding" || message?.type === "apply-overlay") {
+        // 方向纪律：**只有侧边栏发起**的这三条才转发给页内脚本。
+        // 页内徽标点击也会发 `focus-finding`（双向联动的反向半程）——它带 `sender.tab`，
+        // 若在这里再转回该标签页，会变成"点一次闪两下"。侧边栏直接收 runtime 广播，无需中转。
+        if (sender?.tab) return { status: "from_content" };
         const tab = await activeTab();
         if (!tab?.id) return { status: "error", reason: "no_active_tab" };
         try {

@@ -238,7 +238,22 @@ function wire() {
   chrome.runtime.onMessage.addListener((message) => {
     if (message?.type === "scan-result" && message.outcome?.scan) applyScan(message.outcome.scan);
     if (message?.type === "scan-error") setStatus(`${COPY.scanFailed}：${message.reason}`);
+    // 双向联动（反向半程）：页内徽标被点击 → SW 收到 content 来源的 `focus-finding` →
+    // 本侧把对应条目滚进视野并高亮。编号即映射键（`data-finding-id`，与徽标同一编号）。
+    if (message?.type === "focus-finding") highlightFinding(message.finding_id);
   });
+}
+
+/** 侧边栏侧高亮：按编号找到条目 → 滚动进视野 + 加 `is-focused` 类（幂等：先清后加）。 */
+function highlightFinding(findingId) {
+  const id = String(findingId ?? "");
+  if (id.length === 0) return false;
+  for (const card of document.querySelectorAll(".finding")) card.classList.remove("is-focused");
+  const card = document.querySelector(`.finding[data-finding-id="${id}"]`);
+  if (!card) return false;
+  card.classList.add("is-focused");
+  if (typeof card.scrollIntoView === "function") card.scrollIntoView({ block: "nearest" });
+  return true;
 }
 
 async function init() {

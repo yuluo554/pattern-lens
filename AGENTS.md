@@ -43,6 +43,7 @@ npm run rules:hash       # 重算规则包内容哈希（写进 rules/manifest.j
 npm run fixtures         # 生成 40 页合成 fixture + 真值（M1）
 npm run fixtures:check   # 再生成位级一致自证（M1）
 npm run bench            # 规则基准 B1–B7：12 规则 × 40 页逐样本点名（M2；rc=0 全达标）
+npm run smoke:overlay    # 浏览器冒烟：真实浏览器真实点击双向联动（M3；缺浏览器显式 SKIP，刻意不进 CI）
 npm run build            # → dist/（可 Load unpacked 的扩展树 + 确定性 zip）
 node tools/check-release.mjs           # 发布终态自检（离线）
 node tools/check-release.mjs --online  # 终态（需远端，M6 用）
@@ -58,5 +59,8 @@ node tools/check-release.mjs --online  # 终态（需远端，M6 用）
   或用 `git -c http.curloptResolve=github.com:443:<ip>`；**推送成功的判据 = 远端 sha == 本地 sha**，不是 push 的退出码。
 - Git Bash 里 `grep`/`sed` 打印 UTF-8 中文文件会乱码（**显示问题，不是文件坏了**）：验收中文文件走 `node -e` 读回或解析器回读。
 - 批量改文件用 `node -e`，改完**回读确认**。
+- **本机 Chrome 可用且可自动化**（2026-10-19 实测 Chrome 155）：`tools/smoke-overlay.mjs` 用
+  `--headless=new --remote-debugging-port=<port>` + CDP over Node 自带 WebSocket（零依赖）驱动，可发**真实点击**；
+  它自带"拉不起来 → 显式 SKIP（rc=0）"，**刻意不进 CI**（CI 无浏览器）。Windows 上退出后 `rmSync(profile)` 可能 EPERM，脚本已吞掉。
 - **禁忌**：把"未执行"写成已完成（`⬜` 不许预填 ✅）；tag 之后改 `src/` 或 `rules/` 代码面；
   数值阈值在 `rules/manifest.json` 之外再写一份（见 `data/README.md` §4 数值口径纪律）。

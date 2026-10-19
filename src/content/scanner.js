@@ -6,6 +6,7 @@
 //   · 注入失败 / 规则包加载失败 → 显式报错（UI 显示"注入失败/扫描未能完成"，不显示"未发现"）。
 
 import { collectPageModel } from "./collector.js";
+import { handleOverlayMessage } from "./overlay.js";
 import { RULE_SPECS, RULESET } from "../lib/rules-pack.js";
 import { loadRulePack } from "../lib/rules.js";
 import { buildScanResult } from "../lib/engine.js";
@@ -67,6 +68,13 @@ const isInjected =
   typeof chrome !== "undefined" && Boolean(chrome.runtime?.id) && typeof document !== "undefined";
 
 if (isInjected) {
+  // 覆盖层消息入口（sidepanel → SW 转发 → 这里）：**同步处理**，故监听器不必 return true。
+  chrome.runtime.onMessage.addListener((message) => {
+    const outcome = handleOverlayMessage(message);
+    if (outcome) return outcome;
+    return undefined;
+  });
+
   runScan()
     .then((outcome) => chrome.runtime.sendMessage({ type: MESSAGE_SCAN_RESULT, outcome }))
     .catch((error) =>

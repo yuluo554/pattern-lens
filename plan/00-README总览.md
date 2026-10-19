@@ -7,7 +7,7 @@
 - **版本**：v1（2026-10-17 题定稿；需求侧与开源检索基准日 2026-10-17）；M0 骨架落地 2026-10-18
 - **一句话定位**：点一下扩展图标，侧边栏列出当前页所有**可疑模式（待核对）**——规则名 + 原文片段 + 元素定位 + 严重度，页面上用编号徽标高亮取证，一键导出证据包。**做取证，不做打分**：无证据节点不产出结论。
 - **交付形态**：**唯一形态** = Chrome/Edge MV3 扩展（侧边栏 + 按需注入 content script + service worker），纯前端、无后端、无模型、无远程代码。不设备选形态。
-- **当前状态**：🟡 **M0 / M1 / M2 完成**（M2 = 规则引擎与按需注入：引擎 + 采集器 + 注入链路 + B1–B7 基准双边达标），M3–M6 未开工。台账状态列按**实际验证过的证据**翻转，未验证项保持 ⬜。
+- **当前状态**：🟡 **M0 / M1 / M2 / M3 完成**（M3 = 页内取证高亮层：Shadow DOM 覆盖层 + 编号徽标 + 双向联动 + 清除后 DOM diff = 0，含真实浏览器冒烟），M4–M6 未开工。台账状态列按**实际验证过的证据**翻转，未验证项保持 ⬜。
 
 ---
 
@@ -30,7 +30,7 @@
 | `plan/HANDOFF-M2.md` | **启动第 2 棒时读的交接单**（M1 收尾时写） | ✅ M1 收尾 |
 | `plan/HANDOFF-M3.md` | **启动第 3 棒时读的交接单**（M2 收尾时写） | ✅ M2 收尾 |
 | `plan/RELEASE-M6.md` | 发布留档（tag 前事实 / tag 后追加，两栏） | ⬜ 待 M6 |
-| `manifest.json` + `src/` | MV3 清单与扩展源码（引擎/采集器/注入链路已接入） | 🟡 骨架 M0，引擎链路 M2，UI 待 M3–M5 |
+| `manifest.json` + `src/` | MV3 清单与扩展源码（引擎/采集器/注入链路已接入） | 🟡 骨架 M0，引擎链路 M2，页内取证层 M3，侧边栏 UI 待 M4/M5 |
 | `rules/manifest.json` + `rules/dp-*.json` | 规则包版本/阈值（唯一数值真相源）+ 首批 12 条规则 | ✅ 数据 M0 / 引擎接入 M2 |
 | `data/fixtures/` | 40 页合成 fixture + 逐页真值（`page-NN/truth.json`）+ 覆盖矩阵（`COVERAGE.md`）+ 压力页 | ✅ M1 |
 | `tools/bench-rules.mjs` + `tools/fixture-page-model.mjs` | 规则基准 runner（B1–B7）与 Node 侧页面模型解析器（独立于生成器） | ✅ M2 |
@@ -93,6 +93,15 @@
 | D30 | **同一 `(rule_id, locator)` 只出一条 finding**（先到先得 = 文档序在前者胜），被丢弃的候选记 `rejected[].reason = "duplicate_locator"` | 允许同一 locator 出多条（同规则重复计数） | 定位串 `tag:nth(i)` 的约定是"**文本节点的路径 = 其父元素路径**"（K24），于是文本节点与其宿主**控件**共用同一个 locator：若两条都产出，同一条证据在清单里出现两次（用户看到重复条目、导出也重复）。**弃"允许重复"**：清单要能当证据用，重复条目会让"几条证据"这个数失真。**丢弃必须可观测**（与 K3 的证据门禁同一纪律：丢弃 ≠ 静默跳过），故进 `rejected` 而不是直接 continue |
 | D31 | **周边文本用"按需翻倍前缀"归一**（`limitNearText`），不做通篇归一 | 逐节点对**整个父容器文本**做空白归一 | **实测**：压力页（5007 节点）里一个 `<ul>` 下有 2500 行，父文本 ~25k 字符 × 2500 子节点 ≈ 6 千万字符的正则归一 → 冷启动 **1313ms**，超 `first_result_budget_ms`（500ms）预算 2.6 倍。归一只让字符串**变短**（折叠空白），故"原始前缀归一后 ≥ limit"时其前 limit 字符与"全串归一后前 limit 字符"**逐字节相同** → 语义与通篇归一等价，工作量降到 O(limit×常数)（改后 **106~175ms**，多轮实测区间）。**弃通篇归一**（超预算即 NFR-06 不达标）；**弃"直接截原始串再归一"**（会在中间截断处制造"多一个少一个空格"的语义差） |
 
+### 2.5 M3 页内取证层期决策（2026-10-19）
+
+| # | 决策 | 备选方案 | 结论与弃选理由 |
+|---|---|---|---|
+| D32 | **覆盖层宿主用一个自定义元素名 `pattern-lens-overlay` + `id`，徽标/样式全在 `attachShadow({mode:"open"})` 内** | ①普通 `div` + 内联样式；②`web_accessible_resources` + iframe | M3 的三项 diff 判据（节点数 / 属性集 / `document.styleSheets.length`）要求"宿主只多一个容器节点、样式不进宿主"。**弃①**：普通 div 仍会把徽标作为宿主子节点（节点数会 +N，不是 +1），且内联样式会污染宿主属性集。**弃②**：iframe 与 `web_accessible_resources` 会把扩展资源暴露给网页（可指纹识别），且跨 frame 定位/点击链路复杂。真实浏览器实测（Chrome 155）：容器 +1、`host.children.length = 0`、`styleSheets` 不变 |
+| D33 | **编号只由 `src/lib/ordering.js` 产出；覆盖层把 `finding_id` 当编号搬运工**（`{finding_id: badge_id}` 即徽标 `textContent`/`dataset`） | 覆盖层内按 severity/DOM 序**再排一次**并自己编号 | K5 已声明"排序与编号是单点，UI 不得再排序/再编号"。若覆盖层自排，页内徽标编号与侧边栏编号会各自漂移（同一 finding 两处编号不同，用户按编号对不上）。**弃"再排一次"**：会立刻打挂"一一对应"判据（`tests/overlay-dom-diff.test.mjs` 传入顺序与编号顺序相反，自排即红） |
+| D34 | **`focus-finding` 双向半程靠 SW 区分来源**：带 `sender.tab`（页内徽标点击）→ 回 `{status:"from_content"}` **不转发**；无 `sender.tab`（侧边栏发起）→ 转发给当前标签页 | 不区分来源，一律转发给当前标签页 | 页内徽标点击也发 `focus-finding`（反向半程）；SW 若一律转发，会把这条消息**再送回同一页面**，等于"点一次闪两下"。侧边栏是扩展页（`sender.tab` 为空），故以"有无 `sender.tab`"区分方向是可靠判据。**弃"不区分"**：真实浏览器里表现为重复闪烁（`tests/injection-chain.test.mjs` 用否定性事实断言页内来源零转发） |
+| D35 | **浏览器冒烟单列脚本 `tools/smoke-overlay.mjs`，**不进 CI**；能拉起 → 真跑，拉不起 → 显式 SKIP（rc=0）** | ①把冒烟塞进 `npm test`；②本机确认拉不起浏览器 → 只 SKIP | 本机实测 **Chrome 155 可用且 CDP（零依赖 WebSocket）可驱动**，故不该直接 SKIP——真实点击双向联动是假 DOM 验不到的。**弃①**：CI（ubuntu/windows 无浏览器）会红，且拉浏览器不稳会污染 `npm test` 的确定性。**弃②**：那是"没试就说做不到"。口径：脚本自身**拉不起来时 SKIP**（把不稳这件事留在脚本里，而不是留在报告里） |
+
 ---
 
 ## 3A. 招牌动词表（能力名词 → 交付态入口 → 断言基准）
@@ -106,7 +115,7 @@
 | 原文片段（snippet） | 采集器从宿主文本节点原样截取（M2 已通） | `tests/snippet-verbatim.test.mjs` + 基准 B4（48 条逐条在 `page.html` 里） |
 | 元素定位（locator） | 采集器为每个节点生成稳定定位串（M2 已通） | 基准 B5：48 条 finding + 8 条 rejected 全部回解到节点；同一 `(rule_id, locator)` 只出一条（D30） |
 | 严重度（severity） | 规则包 `severity` 字段（M2 已通） | `tests/rules-schema.test.mjs`：取值属于 `rules/manifest.json` 枚举 |
-| 编号徽标高亮 | 扫描后自动注入覆盖层 / 侧边栏「在页面高亮」（M3） | `tests/overlay-dom-diff.test.mjs`：清除后页面 DOM diff = 0 |
+| 编号徽标高亮 | 扫描后自动注入覆盖层 / 侧边栏「在页面高亮」（M3） | `tests/overlay-dom-diff.test.mjs`：清除后页面 DOM diff = 0；**浏览器冒烟**（真实点击双向联动） | ✅ M3 |
 | 侧边栏取证台（四组分组） | 点击扩展图标打开 sidePanel（M4） | `tests/sidepanel-restore.test.mjs`：冷启动与 SW 被回收后恢复一致 |
 | 一键导出证据包 | 侧边栏「导出 Markdown / JSON」（M5） | `tests/export-fields.test.mjs` + 两次导出字节一致断言 |
 | 零网络请求 | 扫描 + 导出全流程（M5） | `tests/zero-network.test.mjs` + 浏览器冒烟的 resource 计数断言 |
@@ -119,7 +128,7 @@
 | 承诺项 | 应存在的文件路径 | 由哪个里程碑产出 | 用哪条命令核对 |
 | --- | --- | --- | --- |
 | Manifest V3 清单 | `manifest.json` | M0（骨架）/ M2（定稿） | `git ls-files manifest.json` + `npm test -- tests/permissions-whitelist.test.mjs` |
-| 扩展源码 | `src/background/service-worker.js`、`src/content/scanner.js`、`src/sidepanel/`、`src/lib/` | M1/M3/M4 | `git ls-files src` |
+| 扩展源码 | `src/background/service-worker.js`、`src/content/scanner.js`、`src/content/overlay.js`、`src/sidepanel/`、`src/lib/` | M1/M3/M4 | `git ls-files src` |
 | 目录结构说明 | `docs/目录结构说明.md` | M5 | `git ls-files docs/目录结构说明.md` |
 | 规则包 | `rules/dp-*.json` + `rules/manifest.json` | M0（数据）/ M2（引擎） | `git ls-files rules` |
 | 合成 fixture 与真值 | `data/fixtures/page-NN/{page.html,style-map.json,truth.json}` + `data/fixtures/COVERAGE.md` | M1 | `git ls-files data/fixtures` + `npm run fixtures:check` |
@@ -143,7 +152,7 @@
 | 未点击前零注入 | `activeTab` + `scripting` 按需注入 | manifest 无 `content_scripts` | `tests/injection-chain.test.mjs`（含否定性事实：黑名单站点零注入） | ✅ M2（浏览器冒烟仍未做，见 `plan/06` §五） |
 | 点击到出结果 < 500ms（5k 节点页） | 合成 5k 节点页面（`data/fixtures/stress-5k/page.html`） | 单遍遍历 | 基准 B7（阈值读 `rules/manifest.json`） | ✅ M2：5007 节点冷 106~175ms / 热 114~178ms（多轮区间；口径见 D31） |
 | 权限最小化 | manifest 白名单 | 交付物即 manifest | `tests/manifest-permissions.test.mjs` 逐项比对 | ✅ M2（白名单不变，M0 起常驻） |
-| 取证层清除后 DOM diff = 0 | Shadow DOM 覆盖层 | content script | `tests/overlay-dom-diff.test.mjs` | ⬜ 待 M3 |
+| 取证层清除后 DOM diff = 0 | Shadow DOM 覆盖层 | content script | `tests/overlay-dom-diff.test.mjs` + `npm run smoke:overlay`（真实浏览器三项判据） | ✅ M3（假 DOM 离线 + 真实浏览器冒烟双侧） |
 | 侧边栏冷启动 / SW 被回收后恢复 | `chrome.storage.session` | sidePanel + SW | `tests/sidepanel-restore.test.mjs` | ⬜ 待 M4 |
 | 导出 Markdown/JSON 字段完整且字节稳定 | Blob + `<a download>` | sidePanel 导出按钮 | `tests/export.test.mjs` + 基准 B3（40 页双跑字节一致） | 🟡 导出核心 + 双跑断言在（M0），UI 待 M5 |
 | 整轮扫描 + 导出 0 次网络请求 | 只读 DOM，无 fetch | 全链路 | `tests/zero-network.test.mjs` + 浏览器冒烟 | ⬜ 待 M5 |
@@ -160,7 +169,7 @@
 | **M0 计划与可运行骨架** | 装订三件 + `plan/00`–`07` + `data/README` + 规则数据 + 骨架代码/测试/门/CI | ✅ 2026-10-18 |
 | **M1 数据先行** | 40 页合成 fixture + 逐页真值 + 覆盖矩阵 + 确定性生成器（`--check`） | ✅ 2026-10-19 |
 | **M2 规则引擎与按需注入** | `rules/manifest.json` 落地 + 12 条规则引擎 + 采集器 + 注入链路 + 基准达标 | ✅ 2026-10-19 |
-| **M3 页内取证高亮层** | Shadow DOM 覆盖层 + 编号徽标 + 双向联动 + 清除后 DOM diff = 0 | ⬜ 未开始 |
+| **M3 页内取证高亮层** | Shadow DOM 覆盖层 + 编号徽标 + 双向联动 + 清除后 DOM diff = 0 | ✅ 2026-10-19 |
 | **M4 侧边栏取证台** | 四组分组 + `storage.session` 恢复 + 站点级折叠 | ⬜ 未开始 |
 | **M5 导出与设置** | Markdown/JSON 导出 + 黑白名单 + 规则开关 + README/隐私声明/商店素材 | ⬜ 未开始 |
 | **M6 发布** | 公开仓库 + `v0.1.0` tag + Release + `plan/RELEASE-M6.md` 留档 | ⬜ 未开始 |

@@ -162,6 +162,52 @@ test("消息路由：黑名单站点 → blocked（并把原因落 session，UI 
   assert.equal(session.LastScan.blocked, "blocklisted");
 });
 
+test("覆盖层消息：**侧边栏来源**（无 sender.tab）→ 转发给当前标签页（apply / clear / focus 三条）", async () => {
+  const { chrome, calls, listeners } = fakeChrome();
+  await importWorker(chrome);
+  const onMessage = listeners.message[0];
+  const send = (message, sender = {}) =>
+    new Promise((done) => {
+      assert.equal(onMessage(message, sender, done), true, "异步响应必须 return true");
+    });
+
+  for (const message of [
+    { type: "apply-overlay", findings: [] },
+    { type: "clear-overlay" },
+    { type: "focus-finding", finding_id: "F-01" },
+  ]) {
+    const outcome = await send(message);
+    assert.deepEqual(outcome, { status: "forwarded" }, `${message.type} 应被转发`);
+  }
+  const forwarded = calls.filter((call) => call.fn === "tabs.sendMessage");
+  assert.deepEqual(
+    forwarded.map((call) => call.message.type),
+    ["apply-overlay", "clear-overlay", "focus-finding"],
+    "三条覆盖层消息应逐条转发给页内脚本",
+  );
+  assert.equal(forwarded.every((call) => call.tabId === 42), true, "应转发到当前活动标签页");
+});
+
+test("覆盖层消息：**页内来源**（带 sender.tab）→ 不转回页面（否则点一次徽标会闪两下）", async () => {
+  const { chrome, calls, listeners } = fakeChrome();
+  await importWorker(chrome);
+  const onMessage = listeners.message[0];
+  const outcome = await new Promise((done) =>
+    onMessage({ type: "focus-finding", finding_id: "F-01" }, { tab: { id: 42, url: "https://example.invalid/p.html" } }, done),
+  );
+  assert.deepEqual(outcome, { status: "from_content" }, "页内发起的 focus 必须显式识别（不静默）");
+  assert.deepEqual(
+    calls.filter((call) => call.fn === "tabs.sendMessage"),
+    [],
+    "页内来源的 focus-finding 不得被转回页面（否定性事实：一次都没转发）",
+  );
+  assert.deepEqual(
+    calls.filter((call) => call.fn === "scripting.executeScript"),
+    [],
+    "处理覆盖层消息不得触发注入",
+  );
+});
+
 test("manifest 侧口径复核：无 content_scripts（未点击前零注入）", () => {
   const manifest = JSON.parse(readFileSync(join(ROOT, "manifest.json"), "utf8"));
   assert.equal("content_scripts" in manifest, false);

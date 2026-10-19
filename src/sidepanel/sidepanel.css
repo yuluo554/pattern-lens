@@ -151,6 +151,12 @@ button.primary {
   margin-top: 6px;
 }
 
+/* 双向联动：页内徽标被点击时，侧边栏对应条目高亮（类名由 sidepanel.js 切换）。 */
+.finding.is-focused {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
 .settings {
   margin-top: 16px;
   border-top: 1px solid var(--line);

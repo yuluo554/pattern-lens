@@ -30,7 +30,7 @@ const SEGMENTS = [
   { name: "collector.parity", kind: "tests", files: ["tests/collector-parity.test.mjs"], note: "采集侧 ↔ 基准侧同语义（假 DOM 逐节点比对）" },
   { name: "injection.chain", kind: "tests", files: ["tests/injection-chain.test.mjs"], note: "按需注入链路（站点开关 → executeScript → session 回传）" },
   { name: "rules.bench", kind: "gate", script: "tools/bench-rules.mjs", args: ["--quiet"], note: "B1–B7 规则基准（逐规则 precision/recall 双边门）" },
-  { name: "overlay.diff", kind: "not_enabled", milestone: "M3", note: "清除覆盖层后 DOM diff = 0" },
+  { name: "overlay.diff", kind: "tests", files: ["tests/overlay-dom-diff.test.mjs"], note: "页内取证高亮层（Shadow DOM 单容器 + 清除后 DOM diff = 0 + 编号一一对应 + 失效分支）" },
   { name: "sidepanel.restore", kind: "not_enabled", milestone: "M4", note: "冷启动 / SW 回收后恢复" },
   { name: "export.zero_network", kind: "not_enabled", milestone: "M5", note: "整轮扫描 + 导出 0 网络请求" },
 ];
