@@ -121,15 +121,31 @@ test("注入失败 → 显式报错（不装作「未发现」）", async () => 
   assert.match(outcome.reason, /^inject_failed: /);
 });
 
-test("scan-result → 落 storage.session.LastScan（url / scanned_at / scan 三件）", async () => {
+test("scan-result → 落 storage.session.LastScan（url / scanned_at / scan_result 三件）+ 追加 ScanHistory", async () => {
   const { chrome, calls } = fakeChrome();
   const worker = await importWorker(chrome);
   const scan = { url: "https://example.invalid/p.html", scanned_at: "1970-01-01T00:00:00.000Z", findings: [] };
   await worker.storeLastScan(scan);
-  const written = calls.find((call) => call.fn === "storage.session.set");
+  const written = calls.filter((call) => call.fn === "storage.session.set").at(-1);
   assert.deepEqual(written.items, {
-    LastScan: { url: scan.url, scanned_at: scan.scanned_at, scan },
+    LastScan: { url: scan.url, scanned_at: scan.scanned_at, scan_result: scan },
+    ScanHistory: [{ url: scan.url, scanned_at: scan.scanned_at, scan_result: scan }],
   });
+});
+
+test("storeLastScan 幂等/去重：同 (url, scanned_at) 只留一条，历史新在前", async () => {
+  const { chrome, session } = fakeChrome();
+  const worker = await importWorker(chrome);
+  const first = { url: "https://example.invalid/a.html", scanned_at: "2026-10-19T00:00:01.000Z", findings: [] };
+  const second = { url: "https://example.invalid/a.html", scanned_at: "2026-10-19T00:00:02.000Z", findings: [] };
+  await worker.storeLastScan(first);
+  await worker.storeLastScan(second);
+  await worker.storeLastScan(first); // 同 (url, scanned_at) 再来一次 → 不重复
+  assert.deepEqual(
+    session.ScanHistory.map((record) => record.scanned_at),
+    ["2026-10-19T00:00:02.000Z", "2026-10-19T00:00:01.000Z"],
+  );
+  assert.equal(session.LastScan.scan_result, second, "LastScan 必须是最新一次");
 });
 
 test("消息路由：start-scan（站点放行）→ injected；scan-result → stored；get-last-scan 回读同一份", async () => {
@@ -145,8 +161,9 @@ test("消息路由：start-scan（站点放行）→ injected；scan-result → 
   assert.equal((await send({ type: "start-scan" })).status, "injected");
   const scan = { url: "https://example.invalid/current.html", scanned_at: "1970-01-01T00:00:00.000Z", findings: [] };
   assert.deepEqual(await send({ type: "scan-result", outcome: { scan } }), { status: "stored" });
-  assert.deepEqual(session.LastScan, { url: scan.url, scanned_at: scan.scanned_at, scan });
+  assert.deepEqual(session.LastScan, { url: scan.url, scanned_at: scan.scanned_at, scan_result: scan });
   assert.deepEqual(await send({ type: "get-last-scan" }), { LastScan: session.LastScan });
+  assert.deepEqual(await send({ type: "get-scan-history" }), { ScanHistory: session.ScanHistory });
 });
 
 test("消息路由：黑名单站点 → blocked（并把原因落 session，UI 才能明示「该站点已停用」）", async () => {

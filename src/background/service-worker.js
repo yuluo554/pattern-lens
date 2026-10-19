@@ -3,13 +3,14 @@
 //        不做任何网络请求；被回收后靠 chrome.storage.session 恢复。
 
 import { RULESET } from "../lib/rules-pack.js";
+import { HISTORY_KEY, LAST_SCAN_KEY, appendHistory, scanRecordOf } from "../lib/sidepanel-view.js";
 import { isSiteEnabled, normalizeSettings } from "../lib/site-policy.js";
 
 /** build 产物把拼接后的经典脚本放在扩展根（见 plan/03 §五）。 */
 export const SCANNER_FILE = "scanner.js";
 export const MENU_ID = "pattern-lens-scan-page";
 export const SETTINGS_KEY = "settings";
-export const LAST_SCAN_KEY = "LastScan";
+export { HISTORY_KEY, LAST_SCAN_KEY };
 
 export async function openPanel(tab) {
   if (!tab?.windowId) return false;
@@ -40,10 +41,15 @@ export async function startScan(tabId, url) {
   return { status: "injected", ruleset_version: RULESET.ruleset_version };
 }
 
+/** 落盘：`LastScan` = **最新一次**（按扫描时间，不按写入顺序——乱序到达的旧结果不得顶掉新的）；
+ *  `ScanHistory` = 按站点折叠用的历史（时间倒序，同一 `(url, scanned_at)` 去重）。 */
 export async function storeLastScan(scan) {
-  await chrome.storage.session.set({
-    [LAST_SCAN_KEY]: { url: scan.url, scanned_at: scan.scanned_at, scan },
-  });
+  const record = scanRecordOf(scan);
+  const stored = await chrome.storage.session.get(HISTORY_KEY);
+  const history = appendHistory(stored?.[HISTORY_KEY], record);
+  const latest = history[0] ?? record; // 时间倒序 → 首条即最新
+  await chrome.storage.session.set({ [LAST_SCAN_KEY]: latest, [HISTORY_KEY]: history });
+  return latest;
 }
 
 /** 只有真的跑在扩展运行时里才挂监听（否则模块可被离线单测 import——注入链路必须能离线验收）。 */
@@ -85,6 +91,10 @@ if (HAS_RUNTIME) {
       }
       if (message?.type === "get-last-scan") {
         return await chrome.storage.session.get(LAST_SCAN_KEY);
+      }
+      if (message?.type === "get-scan-history") {
+        // 站点级折叠要读历史；SW 被回收后重开仍能从 session 里取回（M4 DoD 第 2 项）。
+        return await chrome.storage.session.get(HISTORY_KEY);
       }
       if (message?.type === "current-url") {
         const tab = await activeTab();

@@ -177,12 +177,35 @@ class FakeShadowRoot extends FakeElement {
   }
 }
 
+/** 文本节点（最小形态）：可被 append、可参与 querySelectorAll（matches 恒 false）、不污染快照。 */
+function createFakeText(text) {
+  return {
+    nodeType: 3,
+    localName: "#text",
+    textContent: String(text),
+    parentElement: null,
+    children: [],
+    childNodes: [],
+    attributes: [],
+    dataset: {},
+    matches: () => false,
+    remove() {
+      const parent = this.parentElement;
+      if (!parent) return;
+      parent.children = parent.children.filter((child) => child !== this);
+      parent.childNodes = parent.childNodes.filter((child) => child !== this);
+      this.parentElement = null;
+    },
+  };
+}
+
 export function createFakeDocument() {
   const doc = {
     nodeType: 9,
     styleSheets: [],
     children: [],
   createElement: (tagName) => new FakeElement(tagName, doc),
+  createTextNode: (text) => createFakeText(text),
   querySelectorAll(selector) {
     return this.documentElement.querySelectorAll(selector);
   },

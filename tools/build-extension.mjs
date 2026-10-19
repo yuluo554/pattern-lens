@@ -28,6 +28,7 @@ export const RUNTIME_WHITELIST = [
   "src/lib/rules-pack.js",
   "src/lib/rules.js",
   "src/lib/serialize.js",
+  "src/lib/sidepanel-view.js",
   "src/lib/site-policy.js",
   "src/sidepanel/index.html",
   "src/sidepanel/sidepanel.css",

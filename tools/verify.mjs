@@ -31,7 +31,7 @@ const SEGMENTS = [
   { name: "injection.chain", kind: "tests", files: ["tests/injection-chain.test.mjs"], note: "按需注入链路（站点开关 → executeScript → session 回传）" },
   { name: "rules.bench", kind: "gate", script: "tools/bench-rules.mjs", args: ["--quiet"], note: "B1–B7 规则基准（逐规则 precision/recall 双边门）" },
   { name: "overlay.diff", kind: "tests", files: ["tests/overlay-dom-diff.test.mjs"], note: "页内取证高亮层（Shadow DOM 单容器 + 清除后 DOM diff = 0 + 编号一一对应 + 失效分支）" },
-  { name: "sidepanel.restore", kind: "not_enabled", milestone: "M4", note: "冷启动 / SW 回收后恢复" },
+  { name: "sidepanel.restore", kind: "tests", files: ["tests/sidepanel-restore.test.mjs"], note: "侧边栏取证台（四组分组来自规则包 + storage.session 冷启动/SW 回收后恢复 + 站点级折叠 + 空态文案）" },
   { name: "export.zero_network", kind: "not_enabled", milestone: "M5", note: "整轮扫描 + 导出 0 网络请求" },
 ];
 

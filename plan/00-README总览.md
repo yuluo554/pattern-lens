@@ -7,7 +7,7 @@
 - **版本**：v1（2026-10-17 题定稿；需求侧与开源检索基准日 2026-10-17）；M0 骨架落地 2026-10-18
 - **一句话定位**：点一下扩展图标，侧边栏列出当前页所有**可疑模式（待核对）**——规则名 + 原文片段 + 元素定位 + 严重度，页面上用编号徽标高亮取证，一键导出证据包。**做取证，不做打分**：无证据节点不产出结论。
 - **交付形态**：**唯一形态** = Chrome/Edge MV3 扩展（侧边栏 + 按需注入 content script + service worker），纯前端、无后端、无模型、无远程代码。不设备选形态。
-- **当前状态**：🟡 **M0 / M1 / M2 / M3 完成**（M3 = 页内取证高亮层：Shadow DOM 覆盖层 + 编号徽标 + 双向联动 + 清除后 DOM diff = 0，含真实浏览器冒烟），M4–M6 未开工。台账状态列按**实际验证过的证据**翻转，未验证项保持 ⬜。
+- **当前状态**：🟡 **M0 / M1 / M2 / M3 / M4 完成**（M3 = 页内取证高亮层：Shadow DOM 覆盖层 + 编号徽标 + 双向联动 + 清除后 DOM diff = 0，含真实浏览器冒烟；M4 = 侧边栏取证台：四组分组来自规则包 + `storage.session` 冷启动/SW 回收后恢复 + 站点级折叠），M5–M6 未开工。台账状态列按**实际验证过的证据**翻转，未验证项保持 ⬜。
 
 ---
 
@@ -29,8 +29,9 @@
 | `plan/HANDOFF-M1.md` | **启动第 1 棒时读的交接单**（M0 收尾时写） | ✅ M0 收尾 |
 | `plan/HANDOFF-M2.md` | **启动第 2 棒时读的交接单**（M1 收尾时写） | ✅ M1 收尾 |
 | `plan/HANDOFF-M3.md` | **启动第 3 棒时读的交接单**（M2 收尾时写） | ✅ M2 收尾 |
+| `plan/HANDOFF-M4.md` | **启动第 4 棒时读的交接单**（M3 收尾时写） | ✅ M3 收尾 |
 | `plan/RELEASE-M6.md` | 发布留档（tag 前事实 / tag 后追加，两栏） | ⬜ 待 M6 |
-| `manifest.json` + `src/` | MV3 清单与扩展源码（引擎/采集器/注入链路已接入） | 🟡 骨架 M0，引擎链路 M2，页内取证层 M3，侧边栏 UI 待 M4/M5 |
+| `manifest.json` + `src/` | MV3 清单与扩展源码（引擎/采集器/注入链路已接入） | 🟡 骨架 M0，引擎链路 M2，页内取证层 M3，侧边栏取证台 M4（导出 UI 待 M5） |
 | `rules/manifest.json` + `rules/dp-*.json` | 规则包版本/阈值（唯一数值真相源）+ 首批 12 条规则 | ✅ 数据 M0 / 引擎接入 M2 |
 | `data/fixtures/` | 40 页合成 fixture + 逐页真值（`page-NN/truth.json`）+ 覆盖矩阵（`COVERAGE.md`）+ 压力页 | ✅ M1 |
 | `tools/bench-rules.mjs` + `tools/fixture-page-model.mjs` | 规则基准 runner（B1–B7）与 Node 侧页面模型解析器（独立于生成器） | ✅ M2 |
@@ -102,6 +103,14 @@
 | D34 | **`focus-finding` 双向半程靠 SW 区分来源**：带 `sender.tab`（页内徽标点击）→ 回 `{status:"from_content"}` **不转发**；无 `sender.tab`（侧边栏发起）→ 转发给当前标签页 | 不区分来源，一律转发给当前标签页 | 页内徽标点击也发 `focus-finding`（反向半程）；SW 若一律转发，会把这条消息**再送回同一页面**，等于"点一次闪两下"。侧边栏是扩展页（`sender.tab` 为空），故以"有无 `sender.tab`"区分方向是可靠判据。**弃"不区分"**：真实浏览器里表现为重复闪烁（`tests/injection-chain.test.mjs` 用否定性事实断言页内来源零转发） |
 | D35 | **浏览器冒烟单列脚本 `tools/smoke-overlay.mjs`，**不进 CI**；能拉起 → 真跑，拉不起 → 显式 SKIP（rc=0）** | ①把冒烟塞进 `npm test`；②本机确认拉不起浏览器 → 只 SKIP | 本机实测 **Chrome 155 可用且 CDP（零依赖 WebSocket）可驱动**，故不该直接 SKIP——真实点击双向联动是假 DOM 验不到的。**弃①**：CI（ubuntu/windows 无浏览器）会红，且拉浏览器不稳会污染 `npm test` 的确定性。**弃②**：那是"没试就说做不到"。口径：脚本自身**拉不起来时 SKIP**（把不稳这件事留在脚本里，而不是留在报告里） |
 
+### 2.6 M4 侧边栏取证台期决策（2026-10-19）
+
+| # | 决策 | 备选方案 | 结论与弃选理由 |
+|---|---|---|---|
+| D36 | **`LastScan` 字段名收敛为 `scan_result`**（实装侧改字段；`plan/06` M4 DoD 第 4 项的口径即实装） | ①改文档把 `plan/06` DoD 第 4 项写成 `scan`；②两侧各留一份 | M0–M3 实装写的是 `scan`，而 DoD 与 `plan/03` §三 要求 `scan_result`——**两侧各写一份即口径漂移**（登记在 `plan/HANDOFF-M4.md` §2 第 4 条）。**弃①**：DoD 是题面承诺，改它等于把验收口径往实装迁就；**弃②**：正是要消灭的漂移。收敛落点 = `src/lib/sidepanel-view.js` 的 `scanRecordOf()`（唯一产出处，改字段只改这里 + 测试）；`tests/injection-chain.test.mjs` 与 `tests/sidepanel-restore.test.mjs` 双侧断言 |
+| D37 | **站点级折叠用第二个 session 键 `ScanHistory`**（`LastScan` 仍保留最新一次）；历史**扫描时间倒序**、按 `(url, scanned_at)` 去重、上限 20 | ①只存内存（关掉 sidepanel 即丢）；②不实现折叠（M4 只做 4 项 DoD，里程碑行措辞收敛） | 里程碑行（三处状态副本）写的是「四组分组 + `storage.session` 恢复 + **站点级折叠**」，而 M4 DoD 只列 4 项（不含折叠）。**弃②**：会让状态表里的承诺在 M4 ✅ 时仍无实现（"写了却没做"）；**弃①**：折叠要求"关掉侧边栏再开，多次扫描仍按时间倒序折叠"，纯内存做不到。故新增 `ScanHistory`（SW 落盘、sidepanel 只读，**不各存一份**）；`HISTORY_MAX = 20` 是小整数常数（K1 豁免面内，不进 manifest） |
+| D38 | **侧边栏纯逻辑单列 `src/lib/sidepanel-view.js`，`sidepanel.js` 只做 DOM 接线并支持依赖注入**（`initSidepanel({doc, runtime})`） | ①纯逻辑留在 `sidepanel.js`（靠全局 `document`/`chrome`）；②只做纯函数、不验 DOM 侧 | 分组/折叠/恢复/空态文案这些判据**必须能离线验收**——但 `sidepanel.js` 依赖宿主 `document`，写在一起就只能"跑扩展"才能验。**弃①**：等于把 M4 DoD 的 4 项判据全押在"有没有浏览器"上（与 D15 的分层口径相悖）；**弃②**：DOM 侧接线（`<details open>` 只展开最新、恢复落到文案）同样是 DoD 判据，不验就只是"函数对了"。故纯逻辑进 `src/lib/**`（K10：不碰扩展 API / DOM / 时钟），DOM 侧靠假 DOM + 假 chrome 运行时验收（同 injection-chain / overlay 的做法） |
+
 ---
 
 ## 3A. 招牌动词表（能力名词 → 交付态入口 → 断言基准）
@@ -116,7 +125,7 @@
 | 元素定位（locator） | 采集器为每个节点生成稳定定位串（M2 已通） | 基准 B5：48 条 finding + 8 条 rejected 全部回解到节点；同一 `(rule_id, locator)` 只出一条（D30） |
 | 严重度（severity） | 规则包 `severity` 字段（M2 已通） | `tests/rules-schema.test.mjs`：取值属于 `rules/manifest.json` 枚举 |
 | 编号徽标高亮 | 扫描后自动注入覆盖层 / 侧边栏「在页面高亮」（M3） | `tests/overlay-dom-diff.test.mjs`：清除后页面 DOM diff = 0；**浏览器冒烟**（真实点击双向联动） | ✅ M3 |
-| 侧边栏取证台（四组分组） | 点击扩展图标打开 sidePanel（M4） | `tests/sidepanel-restore.test.mjs`：冷启动与 SW 被回收后恢复一致 |
+| 侧边栏取证台（四组分组） | 点击扩展图标打开 sidePanel（M4） | `tests/sidepanel-restore.test.mjs`：四组分组顺序/归属来自规则包；冷启动与 SW 被回收后恢复一致；站点级折叠 | ✅ M4 |
 | 一键导出证据包 | 侧边栏「导出 Markdown / JSON」（M5） | `tests/export-fields.test.mjs` + 两次导出字节一致断言 |
 | 零网络请求 | 扫描 + 导出全流程（M5） | `tests/zero-network.test.mjs` + 浏览器冒烟的 resource 计数断言 |
 | 零注入 | 扩展安装后未点击前（M2 已通） | `tests/injection-chain.test.mjs`：manifest 无 `content_scripts`；黑名单站点 `executeScript` **一次都没被调用** |
@@ -153,10 +162,10 @@
 | 点击到出结果 < 500ms（5k 节点页） | 合成 5k 节点页面（`data/fixtures/stress-5k/page.html`） | 单遍遍历 | 基准 B7（阈值读 `rules/manifest.json`） | ✅ M2：5007 节点冷 106~175ms / 热 114~178ms（多轮区间；口径见 D31） |
 | 权限最小化 | manifest 白名单 | 交付物即 manifest | `tests/manifest-permissions.test.mjs` 逐项比对 | ✅ M2（白名单不变，M0 起常驻） |
 | 取证层清除后 DOM diff = 0 | Shadow DOM 覆盖层 | content script | `tests/overlay-dom-diff.test.mjs` + `npm run smoke:overlay`（真实浏览器三项判据） | ✅ M3（假 DOM 离线 + 真实浏览器冒烟双侧） |
-| 侧边栏冷启动 / SW 被回收后恢复 | `chrome.storage.session` | sidePanel + SW | `tests/sidepanel-restore.test.mjs` | ⬜ 待 M4 |
+| 侧边栏冷启动 / SW 被回收后恢复 | `chrome.storage.session` | sidePanel + SW | `tests/sidepanel-restore.test.mjs` | ✅ M4（冷启动 + SW 回收后重开双侧一致；站点级折叠同段验） |
 | 导出 Markdown/JSON 字段完整且字节稳定 | Blob + `<a download>` | sidePanel 导出按钮 | `tests/export.test.mjs` + 基准 B3（40 页双跑字节一致） | 🟡 导出核心 + 双跑断言在（M0），UI 待 M5 |
 | 整轮扫描 + 导出 0 次网络请求 | 只读 DOM，无 fetch | 全链路 | `tests/zero-network.test.mjs` + 浏览器冒烟 | ⬜ 待 M5 |
-| 文案统一「可疑模式（待核对）」 | 文案单点 `src/lib/copy.js` | sidePanel + 导出 | `tests/copy-guard.test.mjs`：禁用词扫描 + 阳性对照 | 🟡 扫描在（M0），UI 待 M4/M5 |
+| 文案统一「可疑模式（待核对）」 | 文案单点 `src/lib/copy.js` | sidePanel + 导出 | `tests/copy-guard.test.mjs`：禁用词扫描 + 阳性对照 | ✅ M4：侧边栏空态文案走 copy 单点 + 禁用词扫描（导出侧待 M5） |
 | 隐私声明与零采集一致 | `docs/隐私声明.md` | 文档 + 代码 | 人工对账 + 权限白名单断言 | ⬜ 待 M5 |
 | **零远程代码**（MV3 硬约束） | 无 CDN、无 fetch、规则随包 | 全链路 | `tests/source-hygiene.test.mjs`：源码与产物无 `http(s)://` 外链、无 `eval` | ✅ 扫描常驻（M0 起，M2 增阈值 token 门禁） |
 
@@ -170,7 +179,7 @@
 | **M1 数据先行** | 40 页合成 fixture + 逐页真值 + 覆盖矩阵 + 确定性生成器（`--check`） | ✅ 2026-10-19 |
 | **M2 规则引擎与按需注入** | `rules/manifest.json` 落地 + 12 条规则引擎 + 采集器 + 注入链路 + 基准达标 | ✅ 2026-10-19 |
 | **M3 页内取证高亮层** | Shadow DOM 覆盖层 + 编号徽标 + 双向联动 + 清除后 DOM diff = 0 | ✅ 2026-10-19 |
-| **M4 侧边栏取证台** | 四组分组 + `storage.session` 恢复 + 站点级折叠 | ⬜ 未开始 |
+| **M4 侧边栏取证台** | 四组分组 + `storage.session` 恢复 + 站点级折叠 | ✅ 2026-10-19 |
 | **M5 导出与设置** | Markdown/JSON 导出 + 黑白名单 + 规则开关 + README/隐私声明/商店素材 | ⬜ 未开始 |
 | **M6 发布** | 公开仓库 + `v0.1.0` tag + Release + `plan/RELEASE-M6.md` 留档 | ⬜ 未开始 |
 
