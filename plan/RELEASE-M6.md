@@ -213,5 +213,7 @@ cmp release/pattern-lens-0.1.0.zip /d/tmp/tagtree/release/pattern-lens-0.1.0.zip
 | **`SHA256SUMS` 曾手写** | 初版把 digest 手工 `sha256sum > SHA256SUMS`——违反"产物一律生成、禁手编"（K23 同族） | 改由 `tools/build-extension.mjs` 的 `renderSums()` 生成，`--check` 纳入逐字节比对（K33） |
 | **发布门 `RELEASE_DOC_NO_DIGEST` 判据面过宽** | 初版对整份留档扫哈希——但 skill 允许 §二（tag 后追加，不进 tag 树）登记哈希 | 判据收窄到 §一（tag 树那半）；§二 不受限（`plan/07` §3.3） |
 | **发布门 git 子进程 stderr 未吞** | 无 tag 时 `fatal: Not a valid object name` 直接漏到 stdout，污染报告 | `git()` 统一 `stdio: ["ignore","pipe","pipe"]` |
+| **脱敏扫描器自引用命中** | `NO_LOCAL_PATHS` 一上就红：**扫描器与留档必然含它们要扫的模式词面**（`D:\ProgramData`、`C:/Users`、`ASUS`）——这是"判据自伤"族 | 按 skill 口径改**文件级豁免**（`SCAN_EXEMPT` 仅 2 份：扫描器与留档；不用 rev 级豁免——那会随收尾提交漂移并放过同 rev 内其他文件的真泄露）；并给判据加**阳性对照**（合成一个本机路径必被扫出，否则"0 命中"证明不了任何事） |
+| **覆盖对账表定位张冠李戴** | `COVERAGE_TABLE` 按"行里含『覆盖对账』"定位，先命中 §1.4 散文里那句"阶段 7 覆盖对账表"，把状态表行误读成对账行 → 报 3 行非三态 | 锚到**小节标题**（`^#{2,4}.*覆盖对账`），不再扫自由文本（同布局门 `STATUS_LINE` 的"判据张冠李戴"教训） |
 
 > 与 M5 那批同源：**不是靠人复查，而是门禁/测试当场红**（前两条是 M6 建仓前扫出，后两条是发布门自测时扫出）。

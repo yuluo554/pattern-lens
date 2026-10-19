@@ -103,3 +103,8 @@ test("发布门：用法错误 → exit 2（未知参数不静默吞掉）", () 
   const { code } = runGate(["--bogus"]);
   assert.equal(code, 2);
 });
+
+test("发布门：脱敏扫描走文件级豁免且有阳性对照（判据不许是空的）", () => {
+  const { stdout } = runGate(["--pre-tag"]);
+  assert.match(stdout, /^PASS\s{2}NO_LOCAL_PATHS\s+0 命中（豁免 2 份：扫描器与留档；阳性对照通过）/m);
+});

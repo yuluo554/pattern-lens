@@ -58,17 +58,23 @@ function sha256(file) {
   return createHash("sha256").update(readFileSync(file)).digest("hex");
 }
 
-/** 扫描文本里"本机路径 / 私密身份"形态——脱敏四步第①/④步的机器判据。 */
+/** 扫描文本里"本机路径 / 私密身份"形态——脱敏四步第①/④步的机器判据。
+ * 账号号段只在**非 noreply 形态**下算命中：`282769740+yuluo554@users.noreply.github.com`
+ * 是被脱敏四步第②步明确认可的对公身份，不该被第①步当成泄露。 */
 const LOCAL_PATH_PATTERNS = [
   /[A-Za-z]:[\\/]+ProgramData/i,
   /[A-Za-z]:[\\/]+Users[\\/]+/i,
   /C:[\\/]Users/i,
   /\\ASUS\\/i,
-  /282769740/,
+  /282769740(?!\+yuluo554@users\.noreply\.github\.com)/,
 ];
 function findLocalPaths(text) {
   return LOCAL_PATH_PATTERNS.some((re) => re.test(text));
 }
+
+/** 扫描器与发布留档**必然含它们要扫的模式词面**——豁免必须**文件级**
+ * （rev 级豁免会随收尾提交漂移并放过同 rev 内其他文件的真泄露）。 */
+const SCAN_EXEMPT = new Set(["tools/check-release.mjs", "plan/RELEASE-M6.md"]);
 
 // ── 离线项 ────────────────────────────────────────────────────────────────────
 
@@ -157,18 +163,26 @@ function checkGitAttributes() {
   add("GITATTRIBUTES", missing.length === 0 && eol ? "PASS" : "FAIL", missing.length ? `缺: ${missing.join("/")}` : "文本归一 + 冻结字节标 binary");
 }
 
-/** 脱敏第①步：入库文本无本机盘符 / 账号名 / 邮箱 / 私密身份。 */
+/** 脱敏第①步：入库文本无本机盘符 / 账号名 / 邮箱 / 私密身份。
+ * 扫描器与发布留档必然含"要扫的模式词面"——按 skill 口径走**文件级豁免**（见 SCAN_EXEMPT）。 */
 function checkNoLocalPaths() {
+  // 阳性对照：判据自身不许是空的（否则"0 命中"证明不了任何事）
+  const probe = findLocalPaths("D:\\ProgramData\\zcode\\x") && findLocalPaths("C:/Users/ASUS/x");
+  if (!probe) {
+    add("NO_LOCAL_PATHS", "FAIL", "阳性对照失败：判据扫不出合成的本机路径（判据是空的）");
+    return;
+  }
   const tracked = git(["ls-files"]).split("\n").filter(Boolean);
   const hits = [];
   for (const rel of tracked) {
+    if (SCAN_EXEMPT.has(rel)) continue;
     if (!/\.(md|mjs|js|json|txt|html|css|yml|yaml|gitattributes|gitignore)$/.test(rel) && !rel.startsWith(".")) continue;
     const full = join(ROOT, rel);
     if (!existsSync(full) || statSync(full).size > 512 * 1024) continue;
     scanned.files += 1;
     if (findLocalPaths(readFileSync(full, "utf8"))) hits.push(rel);
   }
-  add("NO_LOCAL_PATHS", hits.length === 0 ? "PASS" : "FAIL", hits.join(",") || "0 命中");
+  add("NO_LOCAL_PATHS", hits.length === 0 ? "PASS" : "FAIL", hits.join(",") || `0 命中（豁免 ${SCAN_EXEMPT.size} 份：扫描器与留档；阳性对照通过）`);
 }
 
 /** 脱敏第④步：dist/ 与 zip 内无本机路径（产物也是要被下载的东西）。 */
