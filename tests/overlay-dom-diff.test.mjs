@@ -249,6 +249,39 @@ test("⑥ 已挂徽标的页面再变化：focus 时回解不到 → 显式标�
   assert.deepEqual(overlayState({ doc }).staleIds, ["F-01"]);
 });
 
+test("⑤ 双向联动（侧边栏反向半程）：`focus-finding` → 按编号高亮条目并滚进视野（幂等）", async () => {
+  const { highlightFinding } = await import("../src/sidepanel/sidepanel.js");
+  const doc = buildFakeDom(PAGE_HTML);
+  const makeCard = (findingId) => {
+    const card = doc.createElement("article");
+    card.className = "finding";
+    card.dataset.findingId = findingId;
+    doc.body.append(card);
+    return card;
+  };
+  const first = makeCard("F-01");
+  const second = makeCard("F-02");
+
+  assert.equal(highlightFinding("F-02", doc), true, "应高亮对应编号的条目");
+  assert.equal(second.classList.contains("is-focused"), true);
+  assert.equal(first.classList.contains("is-focused"), false, "其它条目不得残留高亮");
+  assert.equal(second.scrollIntoViewCalls.length, 1, "应把该条目滚进视野");
+
+  // 幂等：再高亮另一条 → 旧的清除、新的加亮（不累积）。
+  assert.equal(highlightFinding("F-01", doc), true);
+  assert.equal(first.classList.contains("is-focused"), true);
+  assert.equal(second.classList.contains("is-focused"), false, "高亮必须唯一（不累积多个 is-focused）");
+
+  assert.equal(highlightFinding("F-99", doc), false, "未知编号显式返回 false（不静默）");
+  assert.equal(highlightFinding("", doc), false, "空编号显式返回 false");
+});
+
+test("⑤ 侧边栏模块可离线 import：没有扩展运行时不自启动（反向半程必须能离线验收）", async () => {
+  delete globalThis.chrome;
+  const module = await import("../src/sidepanel/sidepanel.js");
+  assert.equal(typeof module.highlightFinding, "function", "反向半程函数必须可导出验收");
+});
+
 test("消息入口：apply / clear / focus 三种消息各走对分支，未知消息返回 null（不吞）", () => {
   const doc = buildFakeDom(PAGE_HTML);
   const timer = timerStub();

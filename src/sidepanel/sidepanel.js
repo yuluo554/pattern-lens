@@ -244,12 +244,13 @@ function wire() {
   });
 }
 
-/** 侧边栏侧高亮：按编号找到条目 → 滚动进视野 + 加 `is-focused` 类（幂等：先清后加）。 */
-function highlightFinding(findingId) {
+/** 侧边栏侧高亮：按编号找到条目 → 滚动进视野 + 加 `is-focused` 类（幂等：先清后加）。
+ *  `doc` 可注入（默认全局 `document`）——离线假 DOM 上也要能验收反向半程。 */
+export function highlightFinding(findingId, doc = document) {
   const id = String(findingId ?? "");
   if (id.length === 0) return false;
-  for (const card of document.querySelectorAll(".finding")) card.classList.remove("is-focused");
-  const card = document.querySelector(`.finding[data-finding-id="${id}"]`);
+  for (const card of doc.querySelectorAll(".finding")) card.classList.remove("is-focused");
+  const card = doc.querySelector(`.finding[data-finding-id="${id}"]`);
   if (!card) return false;
   card.classList.add("is-focused");
   if (typeof card.scrollIntoView === "function") card.scrollIntoView({ block: "nearest" });
@@ -265,4 +266,7 @@ async function init() {
   await loadLastScan();
 }
 
-init();
+/** 只有真的跑在扩展页里才自启动（否则模块可被离线单测 import——反向半程必须能离线验收）。 */
+const HAS_RUNTIME = typeof chrome !== "undefined" && Boolean(chrome.runtime?.id) && typeof document !== "undefined";
+
+if (HAS_RUNTIME) init();

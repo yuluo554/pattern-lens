@@ -122,11 +122,20 @@ export class FakeElement {
     return root;
   }
 
-  // ── 查询（只实现覆盖层用到的三种选择器：`tag` / `.class` / `#id`）──
+  // ── 查询（只实现覆盖层/侧边栏用到的选择器：`tag` / `.class` / `#id` / `.class[data-x="y"]`）──
   matches(selector) {
-    if (selector.startsWith(".")) return this.className.split(/\s+/).includes(selector.slice(1));
-    if (selector.startsWith("#")) return this.id === selector.slice(1);
-    return this.localName === selector.toLowerCase();
+    const attr = /\[([^=\]]+)="([^"]*)"\]$/.exec(selector);
+    const base = attr ? selector.slice(0, selector.length - attr[0].length) : selector;
+    if (attr) {
+      const actual = attr[1].startsWith("data-")
+        ? this.dataset[attr[1].slice(5).replace(/-([a-z])/g, (_, ch) => ch.toUpperCase())]
+        : this.getAttribute(attr[1]);
+      if (String(actual ?? "") !== attr[2]) return false;
+    }
+    if (base.length === 0) return true;
+    if (base.startsWith(".")) return this.className.split(/\s+/).includes(base.slice(1));
+    if (base.startsWith("#")) return this.id === base.slice(1);
+    return this.localName === base.toLowerCase();
   }
   querySelectorAll(selector) {
     const out = [];
@@ -173,8 +182,14 @@ export function createFakeDocument() {
     nodeType: 9,
     styleSheets: [],
     children: [],
-    createElement: (tagName) => new FakeElement(tagName, doc),
-    getElementById(id) {
+  createElement: (tagName) => new FakeElement(tagName, doc),
+  querySelectorAll(selector) {
+    return this.documentElement.querySelectorAll(selector);
+  },
+  querySelector(selector) {
+    return this.querySelectorAll(selector)[0] ?? null;
+  },
+  getElementById(id) {
       const walk = (element) => {
         if (element.id === String(id)) return element;
         for (const child of element.children) {

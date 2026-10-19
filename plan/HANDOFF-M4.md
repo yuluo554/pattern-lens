@@ -11,13 +11,13 @@
 | 项 | 命令 | 结果 |
 | --- | --- | --- |
 | 布局门 | `node tools/check-sprint-layout.mjs` | 8 项 PASS / 0 FAIL（「这轮扫到：文档 11 / 交接单 4 / 状态副本 3」） |
-| 覆盖层测试 | `node --test tests/overlay-dom-diff.test.mjs` | **21 项全通过**；Shadow DOM 单容器 + diff=0 + 编号一一对应 + 幂等 + 双向联动 + 失效分支 + 3 组可证伪自证 |
-| 单元与门测试 | `npm test` | **174 项全通过**（0 fail），**19** 个测试文件（逐文件登记在 `package.json`，由 `tests/test-manifest.test.mjs` 守门） |
+| 覆盖层测试 | `node --test tests/overlay-dom-diff.test.mjs` | **23 项全通过**；Shadow DOM 单容器 + diff=0 + 编号一一对应 + 幂等 + 双向联动（**含反向半程 `highlightFinding()` 高亮条目**）+ 失效分支 + 3 组可证伪自证 |
+| 单元与门测试 | `npm test` | **176 项全通过**（0 fail），**19** 个测试文件（逐文件登记在 `package.json`，由 `tests/test-manifest.test.mjs` 守门） |
 | **浏览器冒烟** | `npm run smoke:overlay` | **全绿**（Chrome 155 真实渲染路径）：30 节点 / 2 finding / 3ms；覆盖层 applied=2 stale=[] shadow=true；**真实鼠标点击**徽标 → 发出 `focus-finding` + 闪烁；`focus-finding` 回解 F-02 → focused；清除后三项判据归零 |
 | 冒烟可证伪 | 变异 `layer.append(badge)` → 宿主 body | **2 项 FAIL**（节点数 25→28 非 +1；徽标取不到）——证明冒烟判据真的会红；还原后逐字节复位 |
 | 全量自检 | `npm run verify` | **18 段 PASS / 2 段 not_enabled**，rc=0（共 20 段）；`overlay.diff` 由 not_enabled 转为**实跑段** |
 | 注入链路（含方向纪律） | `tests/injection-chain.test.mjs` | 侧边栏来源的 apply/clear/focus 三条**逐条转发**；**页内来源的 focus-finding 零转发**（否定性事实）+ 不触发注入 |
-| 构建 | `npm run build` + `npm run build:check` | `dist/` 16 个文件 / 145,831 字节；`release/pattern-lens-0.1.0.zip` 147,697 字节；重生成逐字节一致 |
+| 构建 | `npm run build` + `npm run build:check` | `dist/` 16 个文件 / 146,216 字节；`release/pattern-lens-0.1.0.zip` 148,082 字节；重生成逐字节一致 |
 | 规则包 | `npm run rules:hash -- --check` | `ruleset_hash` **不变**（`b81d12e8…`；M3 未改规则数据与阈值） |
 | fixture | `npm run fixtures:check` | 124 文件位级一致（M3 未动 fixture） |
 | 规则基准 | `npm run bench` | B1–B7 全达标（未受 M3 影响；压力页冷 131.9ms / 热 137.1ms） |
