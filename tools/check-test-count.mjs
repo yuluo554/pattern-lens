@@ -64,9 +64,10 @@ function actualCount() {
     // 内层有失败测试时命令非零——汇总行照样在 stdout 里，本门只管计数，失败详情交给 npm test / verify 的 tests 段。
     output = `${error.stdout ?? ""}${error.stderr ?? ""}`;
   }
-  const match = output.match(/^ℹ tests (\d+)\r?$/m);
+  // 汇总行两种格式（node 版本决定默认 reporter）：spec =「ℹ tests N」（node 24+）、TAP =「# tests N」（node 22）。
+  const match = output.match(/^\s*[#ℹ] tests (\d+)\r?$/m);
   if (!match) {
-    fail("node --test 输出里没找到「ℹ tests N」汇总行");
+    fail("node --test 输出里没找到「tests N」汇总行（spec 的 ℹ 行与 TAP 的 # 行都不在）");
     return null;
   }
   return Number(match[1]);
