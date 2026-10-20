@@ -25,14 +25,14 @@
 | 门 / 命令 | 结果 |
 | --- | --- |
 | `node tools/check-sprint-layout.mjs` | 8 项 PASS / 0 FAIL（「这轮扫到：文档 11 / 交接单 6 / 状态副本 3」） |
-| `npm test` | **254 项**（0 fail），**25** 个测试文件（逐文件登记在 `package.json`，由 `tests/test-manifest.test.mjs` 守门） |
+| `npm test` | **255 项**（0 fail），**25** 个测试文件（逐文件登记在 `package.json`，由 `tests/test-manifest.test.mjs` 守门） |
 | `npm run verify --strict` | **24 段 PASS / 0 段 not_enabled**，rc=0（新增 `release.gate` 段） |
 | `npm run build` + `npm run build:check` | `dist/` **21** 个文件 / 161,776 字节；`release/pattern-lens-0.1.0.zip` 164,266 字节 + `SHA256SUMS`；重生成逐字节一致 |
 | `npm run rules:hash -- --check` | `ruleset_hash` 不变（`b81d12e89a43f1144b8f10d9ca1908919c247c7ee07250dd7b9f3010a642ce51`） |
 | `npm run fixtures:check` | 再生成 124 个文件 == 冻结产物 124 个文件（位级一致） |
 | `npm run bench` | B1–B7 全达标；压力页 5007 节点冷 130.3ms / 热 135.5ms（< 500ms 预算） |
 | `node tools/check-release.mjs --pre-tag` | 见 §1.4；tag / 远端项报 SKIP，离线项全绿（`WORKTREE_CLEAN` 在提交后转 PASS） |
-| 干净环境验证（`plan/07` §3.1 第 4 条） | `git clone --no-local . /d/tmp/pl-clean-clone` → **无 `node_modules`** → `npm test` **255 项** / `npm run verify` **24 段** / `npm run build` + `--check` 逐字节一致；**干净 clone 与主仓的 zip `cmp` 逐字节一致**；干净 clone 里 `check-release.mjs --pre-tag` = PASS 16 / FAIL 0 / SKIP 8（rc=0） |
+| 干净环境验证（`plan/07` §3.1 第 4 条） | `git clone --no-local . /d/tmp/pl-clean-clone` → **无 `node_modules`** → `npm test` **255 项** / `npm run verify` **24 段** / `npm run build` + `--check` 逐字节一致；**干净 clone 与主仓的 zip `cmp` 逐字节一致**；干净 clone 里（**先 `git tag -d v0.1.0` 删掉本地 tag，或用 `git archive` 解包无 .git 树**——tag 树自带的是修尖括号前的门，带 tag 跑会因 `IDENTITY_NOREPLY` 得 15/1/8）`check-release.mjs --pre-tag` = PASS 16 / FAIL 0 / SKIP 8（rc=0） |
 | CI 工作流静态自查 | `.github/workflows/ci.yml`：**1 个 job**（`verify`）× **4 矩阵**（ubuntu/windows × node 22/24）× **9 步**；step `name` 无裸 `: `；`on:` 含 `push` / `pull_request` / `workflow_dispatch` |
 | GitHub Actions（首推 `main`） | **✅ 首推 4/4 绿**（2026-10-19）：branch run `#39200133922`、tag run `#39200309016`，两 run 各 4 矩阵（ubuntu/windows × 22/24）全 success |
 
@@ -198,6 +198,7 @@ tag 之后本棒只做了**追加类提交**（提交信息用"追加/补记/对
 
 追加登记（2026-10-20 二次迭代）：交接物目录 `update/` 用**本地 `.git/info/exclude`** 排除（不进版本控制），
 使其与 `WORKTREE_CLEAN` 共存——不写 `.gitignore`（改受版本控制文件会触发 `POST_TAG_SCOPE` 越界，已实测）。
+- **当前测试数登记**：`npm test` = **257 项**（`tests/counts.test.mjs` 计数守门锚点；新增/删除测试必须同步本行）
 
 ## 三、阶段 7 出口门覆盖对账（三态逐条，不许留空）
 
