@@ -262,3 +262,41 @@ tag 之后本棒只做了**追加类提交**（提交信息用"追加/补记/对
 | **覆盖对账表定位张冠李戴** | `COVERAGE_TABLE` 按"行里含『覆盖对账』"定位，先命中 §1.4 散文里那句"阶段 7 覆盖对账表"，把状态表行误读成对账行 → 报 3 行非三态 | 锚到**小节标题**（`^#{2,4}.*覆盖对账`），不再扫自由文本（同布局门 `STATUS_LINE` 的"判据张冠李戴"教训） |
 
 > 与 M5 那批同源：**不是靠人复查，而是门禁/测试当场红**（前两条是 M6 建仓前扫出，后两条是发布门自测时扫出）。
+
+## 六、v0.2.0 追加发布（2026-10-20 二次迭代，DEC2=A 不动 v0.1.0）
+
+> 缘起：二次迭代诊断出 D1（P1）——`manifest.json` 写 `minimum_chrome_version: "114"`，而
+> `src/background/service-worker.js` 调 `chrome.sidePanel.open()`（@since Chrome 116），114/115 上点图标
+> 抛 TypeError 且无捕获（点图标无任何反应）。修此缺陷必须改交付面（`manifest.json`）→ 按 K34 口径
+> 升版本号重发 0.2.0。**v0.1.0 的 tag / Release / 附件一字不动**（DEC2=A；其附件 sha256 见 §2.2）。
+
+### 6.1 v0.2.0 tag 前事实（全部本机实跑；附件哈希只写 Release 正文，§6.3 落地后补）
+
+| 项 | 值 |
+| --- | --- |
+| 发布版本 | `0.2.0`（`package.json` 与 `manifest.json` 同步；`ruleset_version` 不动——规则未改） |
+| 修复面 | `manifest.json`（minimum_chrome_version 114→116 + version）+ 五处「114+」文案（README ×2、plan/02、plan/03、测试提示语）+ 测试强化（`>=116` 断言）+ 新增能力探测测试（假 `sidePanel` 无 `open` → 显式 TypeError）+ `tests/counts.test.mjs` 计数守门 |
+| 文档面 | `plan/RELEASE-M6.md`（254→255、16/0/8 加「无 tag」前提、本节）、`plan/06`（跨平台 zip 证据口径一行）、`update/` 走 `.git/info/exclude` |
+| 发布门 | `tools/check-release.mjs` 的 `TAG` 常量 v0.1.0→**v0.2.0**（门只验当前版；v0.1.0 的发布事实以 §二 为历史留档） |
+| 测试 | `npm test` = 257 项（256 pass / 1→0 fail 过程见执行记录；较 255 净增 2：能力探测 + 计数守门） |
+| 构建 | `npm run build` → `pattern-lens-0.2.0.zip` + `SHA256SUMS`；`build:check` 三件套逐字节一致；`fixtures:check` 124 文件位级一致；`rules:hash --check` 一致 |
+| 复验方法 | 从 tag 树 `git clone --no-local --branch v0.2.0` → `npm run build` → zip 与 Release 附件 `cmp` 逐字节一致（发布后补记实测值） |
+| tag / Release / 附件上传 | **由用户本人执行**（提示词 §六 第 2 条）；tag 名 `v0.2.0`（annotated） |
+
+### 6.2 v0.1.0 的历史事实登记（DEC2=A：tag 不动，差异随 0.2.0 带出）
+
+- **D2**：`v0.1.0` 的 tag 树 README 仍写「M0–M5 完成，M6（发布）未开工」、`plan/06` 的 M6 行仍 ⬜——
+  发布物自带过期自述。zip 内不含 README（运行面白名单不含它），用户无感；但 `git checkout v0.1.0` 的读者
+  会读到「未发布」。**本节随 0.2.0 入 tag 树即视为修正**，v0.1.0 不重打。
+- **D4**：`plan/RELEASE-M6.md:28` 写「254 项」而实测 255（同页 §一 干净环境行写 255，自相矛盾）——§一 数字已随
+  0.2.0 修正（255 为 tag 前实测事实；当前计数守门锚点见 §2.5 追加登记）。
+- **D5**：§一「干净 clone 里 `--pre-tag` = PASS 16 / FAIL 0 / SKIP 8」只在**删掉本地 tag 的 clone**里成立
+  （tag 树自带修尖括号前的门，带 tag 跑为 15/1/8）——前提已补进该行。
+
+### 6.3 v0.2.0 tag / Release 落地后追加（tag 之后填）
+
+- [ ] 本地 tag `v0.2.0`（annotated）：对象 `待填` → commit `待填`
+- [ ] 远端已推；对象哈希两端一致
+- [ ] GitHub Release `v0.2.0`（draft=false）+ 附件 `pattern-lens-0.2.0.zip`（`164266 字节`，sha256 见 Release 正文与 `release/SHA256SUMS`）
+- [ ] 从 tag 树重建 zip 与附件逐字节一致（实测于 `待填`）
+- [ ] `check-release --online` = PASS N / FAIL 0 / SKIP 0（实测于 `待填`）

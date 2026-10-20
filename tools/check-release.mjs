@@ -22,7 +22,7 @@ const MODE = args.has("--online") ? "online" : args.has("--pre-tag") ? "pre-tag"
 // 发布事实的单一来源（与 README / manifest / Release 同名）
 const OWNER = "yuluo554";
 const REPO = "pattern-lens";
-const TAG = "v0.1.0";
+const TAG = "v0.2.0"; // v0.1.0 的发布事实见 plan/RELEASE-M6.md（历史留档，不再由本门验证）
 
 /** 发布留档路径可用环境变量覆盖：把"缺档"这一瞬态变成可重复构造的输入（见 tests/release-gate.test.mjs）。 */
 const RELEASE_DOC_PATH = process.env.RELEASE_DOC_PATH ?? "plan/RELEASE-M6.md";

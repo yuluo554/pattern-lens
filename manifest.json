@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "界面取证镜（pattern-lens）",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "只做取证不做打分：列出当前页的可疑模式（待核对），每条附规则名、原文片段、元素定位与严重度，并导出证据包。",
   "minimum_chrome_version": "116",
   "permissions": [

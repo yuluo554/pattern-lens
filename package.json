@@ -1,6 +1,6 @@
 {
   "name": "pattern-lens",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "界面取证镜：暗黑模式取证浏览器扩展（MV3）——只做取证不做打分，无证据节点不产出结论",
