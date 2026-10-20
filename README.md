@@ -43,7 +43,7 @@ npm run build         # 产出 dist/（可 Load unpacked 的扩展树）
 然后打开 `chrome://extensions` → 打开右上角**开发者模式** → 点**加载已解压的扩展程序** → 选 **`dist/` 目录**。
 
 > **不需要 `npm install`**：`dependencies` 与 `devDependencies` 均为空，`git clone` 后可直接跑 `npm run build` / `npm test`。
-> 扩展要求 Chrome / Edge **114+**（`chrome.sidePanel` 的起点；`manifest.json` 已声明 `minimum_chrome_version`）。
+> 扩展要求 Chrome / Edge **116+**（`chrome.sidePanel.open()` 的起点——`sidePanel` 命名空间出现得更早，但本扩展靠 `open()` 开面板，而 `open()` 要求 116；`manifest.json` 已声明 `minimum_chrome_version`）。
 
 **方式二：从 [Release](https://github.com/yuluo554/pattern-lens/releases/tag/v0.1.0) 下载 zip** —— 解压后同样在 `chrome://extensions` 里"加载已解压的扩展程序"。
 
@@ -144,7 +144,7 @@ npm run store:screenshots # 用真实浏览器渲染产出商店截图（缺浏�
   **不是**真实站点统计。
 - **商业侧未核验**：Chrome 应用商店在基准日（2026-10-17）本机不可达，故 README 不写"商店里没有同类产品"这类断言。
 - **首期范围**：12 条规则；规则包热更新、多语言 UI、PDF 导出为 roadmap。
-- **浏览器兼容**：首期只支持 Chrome / Edge 114+（`chrome.sidePanel` 起点）。
+- **浏览器兼容**：首期只支持 Chrome / Edge 116+（`chrome.sidePanel.open()` 起点——`sidePanel` 命名空间出现得更早，但本扩展靠 `open()` 开面板）。
 - **CI 已实跑**：首推 4/4 绿（`ubuntu`/`windows` × Node 22/24），branch run 与 tag run 两条均 success。
 
 ## 许可

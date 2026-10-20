@@ -18,7 +18,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const WORKER_PATH = join(ROOT, "src", "background", "service-worker.js");
 
 /** 假 chrome：把每个调用记进 `calls`，便于断言"没注入"这类**否定性**事实。 */
-function fakeChrome({ settings = {}, executeScriptError = null } = {}) {
+function fakeChrome({ settings = {}, executeScriptError = null, sidePanelHasOpen = true } = {}) {
   const calls = [];
   const session = {};
   const local = { settings };
@@ -34,7 +34,10 @@ function fakeChrome({ settings = {}, executeScriptError = null } = {}) {
       create: (options) => calls.push({ fn: "contextMenus.create", options }),
       onClicked: { addListener: (fn) => listeners.menu.push(fn) },
     },
-    sidePanel: { open: async (options) => calls.push({ fn: "sidePanel.open", options }) },
+    // Chrome 116 起才有 sidePanel.open()；sidePanelHasOpen=false 模拟 114/115（命名空间在、open 不在）
+    sidePanel: sidePanelHasOpen
+      ? { open: async (options) => calls.push({ fn: "sidePanel.open", options }) }
+      : {},
     tabs: {
       query: async (query) => {
         calls.push({ fn: "tabs.query", query });
@@ -229,4 +232,19 @@ test("manifest 侧口径复核：无 content_scripts（未点击前零注入）"
   const manifest = JSON.parse(readFileSync(join(ROOT, "manifest.json"), "utf8"));
   assert.equal("content_scripts" in manifest, false);
   assert.equal("host_permissions" in manifest && (manifest.host_permissions ?? []).length > 0, false);
+});
+
+test("能力探测：假 chrome.sidePanel 没有 open（= Chrome 114/115）→ openPanel 的行为被显式断言（不静默 rejection）", async () => {
+  const { chrome } = fakeChrome({ sidePanelHasOpen: false });
+  const worker = await importWorker(chrome);
+  // openPanel 不做能力探测，直接调 chrome.sidePanel.open —— 114/115 上必须以显式 TypeError 暴露，
+  // 而不是"什么都不发生"。门槛已由 manifest.minimum_chrome_version >= 116 挡住（manifest-permissions.test.mjs），
+  // 这条测试把"缺口 API 会显式抛错"钉成事实，防止未来有人误把门槛改回 116 以下却以为能跑。
+  await assert.rejects(
+    worker.openPanel({ windowId: 1 }),
+    (error) => error instanceof TypeError,
+    "sidePanel.open 缺失时必须显式抛 TypeError（= minimum_chrome_version 为什么必须是 116 的行为侧证据）",
+  );
+  // 无 windowId 的守卫分支保持不变：直接 false，不抛
+  assert.equal(await worker.openPanel({}), false);
 });

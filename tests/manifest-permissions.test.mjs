@@ -35,7 +35,11 @@ test("不声明 content_scripts（未点击前零注入的 manifest 侧证据）
 test("MV3 必需字段齐备，且引用的文件真实存在", () => {
   assert.equal(manifest.manifest_version, 3);
   assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
-  assert.ok(manifest.minimum_chrome_version, "缺 minimum_chrome_version（sidePanel 需要 114+）");
+  assert.ok(manifest.minimum_chrome_version, "缺 minimum_chrome_version（sidePanel 需要 116+）");
+  assert.ok(
+    Number(manifest.minimum_chrome_version) >= 116,
+    "minimum_chrome_version 必须 >= 116：service-worker.js 调 chrome.sidePanel.open()，该 API @since Chrome 116（低版本上点图标会 TypeError 静默失败）",
+  );
   assert.equal(manifest.background?.type, "module");
   assert.ok(existsSync(join(ROOT, manifest.background.service_worker)), `缺 ${manifest.background.service_worker}`);
   assert.ok(existsSync(join(ROOT, manifest.side_panel.default_path)), `缺 ${manifest.side_panel.default_path}`);
