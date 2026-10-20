@@ -198,7 +198,7 @@ tag 之后本棒只做了**追加类提交**（提交信息用"追加/补记/对
 
 追加登记（2026-10-20 二次迭代）：交接物目录 `update/` 用**本地 `.git/info/exclude`** 排除（不进版本控制），
 使其与 `WORKTREE_CLEAN` 共存——不写 `.gitignore`（改受版本控制文件会触发 `POST_TAG_SCOPE` 越界，已实测）。
-- **当前测试数登记**：`npm test` = **257 项**（`tests/counts.test.mjs` 计数守门锚点；新增/删除测试必须同步本行）
+- **当前测试数登记**：`npm test` = **256 项**（`tests/counts.test.mjs` 计数守门锚点；新增/删除测试必须同步本行）
 
 ## 三、阶段 7 出口门覆盖对账（三态逐条，不许留空）
 
@@ -278,8 +278,8 @@ tag 之后本棒只做了**追加类提交**（提交信息用"追加/补记/对
 | 修复面 | `manifest.json`（minimum_chrome_version 114→116 + version）+ 五处「114+」文案（README ×2、plan/02、plan/03、测试提示语）+ 测试强化（`>=116` 断言）+ 新增能力探测测试（假 `sidePanel` 无 `open` → 显式 TypeError）+ `tests/counts.test.mjs` 计数守门 |
 | 文档面 | `plan/RELEASE-M6.md`（254→255、16/0/8 加「无 tag」前提、本节）、`plan/06`（跨平台 zip 证据口径一行）、`update/` 走 `.git/info/exclude` |
 | 发布门 | `tools/check-release.mjs` 的 `TAG` 常量 v0.1.0→**v0.2.0**（门只验当前版；v0.1.0 的发布事实以 §二 为历史留档） |
-| 测试 | `npm test` = 257 项（256 pass / 1→0 fail 过程见执行记录；较 255 净增 2：能力探测 + 计数守门） |
-| 构建 | `npm run build` → `pattern-lens-0.2.0.zip` + `SHA256SUMS`；`build:check` 三件套逐字节一致；`fixtures:check` 124 文件位级一致；`rules:hash --check` 一致 |
+| 测试 | `npm test` = **256 项**（较 255 净增 1：能力探测测试；计数守门改为独立门 `tools/check-test-count.mjs`，挂 `verify` 的 `test.count` 段——2026-10-20 CI 实测嵌套 spawn 全量在 node22 递归误判 + 与 bench 抢资源超时，故移出 node:test） |
+| 构建 | `npm run build` → `pattern-lens-0.2.0.zip` + `SHA256SUMS`；`build:check` 三件套逐字节一致；`fixtures:check` 124 文件位级一致；`rules:hash --check` 一致；`verify` = **25 段**（24 + 新增 `test.count`）全绿 |
 | 复验方法 | 从 tag 树 `git clone --no-local --branch v0.2.0` → `npm run build` → zip 与 Release 附件 `cmp` 逐字节一致（发布后补记实测值） |
 | tag / Release / 附件上传 | **由用户本人执行**（提示词 §六 第 2 条）；tag 名 `v0.2.0`（annotated） |
 

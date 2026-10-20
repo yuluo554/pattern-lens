@@ -37,6 +37,7 @@ const SEGMENTS = [
   { name: "export.zero_network", kind: "tests", files: ["tests/zero-network.test.mjs"], note: "整轮扫描 + 导出 0 网络请求（运行面源码断言 + 离线动态探针）" },
   { name: "store.assets", kind: "tests", files: ["tests/store-assets.test.mjs"], note: "商店素材清单 ↔ 实物对账 + 隐私声明 ↔ 权限白名单一致" },
   { name: "release.gate", kind: "tests", files: ["tests/release-gate.test.mjs"], note: "发布终态自检门（M6）的运行时形态：三模、SKIP≠PASS、缺档可构造（**不测当前 0 FAIL**）" },
+  { name: "test.count", kind: "gate", script: "tools/check-test-count.mjs", note: "测试计数守门：实测 tests 总数 == RELEASE-M6「当前测试数登记」活锚点（放在全部 tests 段之后）" },
 ];
 
 function run(command, args) {
