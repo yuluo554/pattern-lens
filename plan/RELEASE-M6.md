@@ -293,10 +293,20 @@ tag 之后本棒只做了**追加类提交**（提交信息用"追加/补记/对
 - **D5**：§一「干净 clone 里 `--pre-tag` = PASS 16 / FAIL 0 / SKIP 8」只在**删掉本地 tag 的 clone**里成立
   （tag 树自带修尖括号前的门，带 tag 跑为 15/1/8）——前提已补进该行。
 
-### 6.3 v0.2.0 tag / Release 落地后追加（tag 之后填）
+### 6.3 v0.2.0 tag / Release 落地后追加（2026-10-21 实测回填）
 
-- [ ] 本地 tag `v0.2.0`（annotated）：对象 `待填` → commit `待填`
-- [ ] 远端已推；对象哈希两端一致
-- [ ] GitHub Release `v0.2.0`（draft=false）+ 附件 `pattern-lens-0.2.0.zip`（`164266 字节`，sha256 见 Release 正文与 `release/SHA256SUMS`）
-- [ ] 从 tag 树重建 zip 与附件逐字节一致（实测于 `待填`）
-- [ ] `check-release --online` = PASS N / FAIL 0 / SKIP 0（实测于 `待填`）
+- [x] 本地 tag `v0.2.0`（annotated）：对象 `0936e0569bcc0fb809bedfcaf280d6501d03ebc6` → commit `b8cda8298bac5df18c8886995d8b64d4d744b0bb`
+- [x] 远端已推；对象哈希两端一致（REST API `git/ref/tags/v0.2.0` object.sha = `0936e0569bcc…`）
+- [x] GitHub Release `v0.2.0`（draft=false）+ 附件 `pattern-lens-0.2.0.zip`（**164,266 字节**，sha256 `c7d1bed318b2e2a15c5b73987f775972075e7c90a4a3f0388e941664d63e9109`——Release 正文与 `release/SHA256SUMS` 同值）
+- [x] 真下载复核：`gh release download` → sha256 与本地留档一致，`cmp` **逐字节一致**
+- [x] 从 tag 树重建（`git clone --no-local --branch v0.2.0` → `npm run build`）与附件 `cmp` **逐字节一致**
+- [x] `check-release --online` = **PASS 25 / FAIL 0 / SKIP 0**（rc=0，2026-10-21 实测）；离线 = PASS 19 / FAIL 0 / SKIP 6；`--pre-tag` = PASS 16 / FAIL 0 / SKIP 9
+- [x] CI：main push run `39456013866` 与 tag run `39456296452` 各 4 矩阵（ubuntu/windows × node 22/24）全 success
+
+### 6.4 v0.2.0 发布过程中修掉的缺陷（两轮 CI 红）
+
+| 缺陷 | 症状（实测） | 处理 |
+| --- | --- | --- |
+| 计数守门在 node:test 内嵌套 spawn 全量 | CI `39454107637` 双 node22 腿红：ubuntu/node22 内层被运行器误判「递归 run()」**跳过全部文件**（stdout 空、无汇总行）；windows/node22 内层与并行测试抢 CPU，bench 压力页冷 503.7ms > 500ms 预算 | 改为独立门 `tools/check-test-count.mjs`（无 `NODE_TEST_CONTEXT`），挂 `verify` 新段 `test.count` 串行调度；含负控（锚点改 999 → 红，还原 → 绿）；锚点 257→256（删去守门自身那项测试） |
+| 汇总行只认 spec 格式 | CI `39455392178` 双 node22 腿红：node22 的 `node --test` 默认 reporter 是 **TAP**（`# tests N`），node24 是 spec（`ℹ tests N`） | 解析两种格式（`/^\s*[#ℹ] tests (\d+)/m`）；修复后 run `39456013866` 4/4 绿 |
+| 「本机绿」掩盖跨版本红 | 首个守门实现本机（node24）绿、CI node22 双腿红——**本机单一版本绿 ≠ 门对**，四矩阵全绿才算 | 教训登记：写解析外部输出的门时，先查「该输出在支持矩阵的每个版本上长什么样」 |
