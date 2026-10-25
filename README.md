@@ -20,12 +20,12 @@ Chrome / Edge **Manifest V3** 浏览器扩展 · 零后端 · 零第三方依赖
 | M5 | 导出与设置：Markdown/JSON 导出、黑白名单、规则开关、隐私声明、商店素材、README 定稿 | ✅ 2026-10-19 |
 | M6 | 发布：公开仓库 + `v0.1.0` tag + Release（确定性 zip）+ 发布留档 | ✅ 2026-10-19 |
 
-> **当前状态：M0–M6 全部完成（v0.1.0 已发布）**——
+> **当前状态：M0–M6 全部完成（v0.2.0 已发布）**——
 > **M2 起扩展已能真扫页面**（点击图标 → 按需注入 → 引擎判定 → 结果回传落 `storage.session`）；
 > **M3 起页内取证层可用**（编号徽标挂在 Shadow DOM 覆盖层里；点条目滚动闪光、点徽标回高亮侧边栏条目；清除后页面"像没被碰过"）；
 > **M4 起侧边栏取证台可用**（四组分组来自规则包；关掉再开、SW 被回收后重开仍恢复上次结果；同站点多次扫描按时间倒序折叠）；
 > **M5 起导出与设置可用**（Markdown/JSON 一键导出、站点黑白名单、规则逐条开关、隐私声明与商店素材齐全）；
-> **M6 起已发布**（[Release v0.1.0](https://github.com/yuluo554/pattern-lens/releases/tag/v0.1.0)，
+> **M6 起已发布**（[Release v0.2.0](https://github.com/yuluo554/pattern-lens/releases/tag/v0.2.0)，
 > 附件 = 确定性 zip；CI 首推 4/4 绿）。
 > 里程碑细节与已知未验证项见 [`plan/06-里程碑与每周演示.md`](plan/06-里程碑与每周演示.md)。
 
@@ -45,7 +45,7 @@ npm run build         # 产出 dist/（可 Load unpacked 的扩展树）
 > **不需要 `npm install`**：`dependencies` 与 `devDependencies` 均为空，`git clone` 后可直接跑 `npm run build` / `npm test`。
 > 扩展要求 Chrome / Edge **116+**（`chrome.sidePanel.open()` 的起点——`sidePanel` 命名空间出现得更早，但本扩展靠 `open()` 开面板，而 `open()` 要求 116；`manifest.json` 已声明 `minimum_chrome_version`）。
 
-**方式二：从 [Release](https://github.com/yuluo554/pattern-lens/releases/tag/v0.1.0) 下载 zip** —— 解压后同样在 `chrome://extensions` 里"加载已解压的扩展程序"。
+**方式二：从 [Release](https://github.com/yuluo554/pattern-lens/releases/tag/v0.2.0) 下载 zip** —— 解压后同样在 `chrome://extensions` 里"加载已解压的扩展程序"。
 
 ## 使用
 

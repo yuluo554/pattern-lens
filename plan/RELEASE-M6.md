@@ -198,7 +198,8 @@ tag 之后本棒只做了**追加类提交**（提交信息用"追加/补记/对
 
 追加登记（2026-10-20 二次迭代）：交接物目录 `update/` 用**本地 `.git/info/exclude`** 排除（不进版本控制），
 使其与 `WORKTREE_CLEAN` 共存——不写 `.gitignore`（改受版本控制文件会触发 `POST_TAG_SCOPE` 越界，已实测）。
-- **当前测试数登记**：`npm test` = **256 项**（`tests/counts.test.mjs` 计数守门锚点；新增/删除测试必须同步本行）
+- **当前测试数登记**：`npm test` = **264 项**（`tools/check-test-count.mjs` 计数守门锚点；新增/删除测试必须同步本行）。
+  2026-10-25（SI-048）：新增 `tests/version-pointer.test.mjs` 版本指针守门 8 项（256 → 264）。
 
 ## 三、阶段 7 出口门覆盖对账（三态逐条，不许留空）
 
